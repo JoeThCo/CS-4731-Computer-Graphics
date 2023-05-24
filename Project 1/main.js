@@ -23,9 +23,9 @@ function main() {
     gl.viewport(0, 0, canvas.width, canvas.height);
 
     points = [];
-    points.push(vec4(-0.5, -0.5, 0.0, 1.0));
-    points.push(vec4(0.5, -0.5, 0.0, 1.0));
-    points.push(vec4(0.0, 0.5, 0.0, 1.0));
+    points.push(vec4(-1.0, -1.0, 0.0, 1.0));
+    points.push(vec4(1.0, -1.0, 0.0, 1.0));
+    points.push(vec4(0.0, 1.0, 0.0, 1.0));
 
     // Create a GPU buffer for vertex data
     let vBuffer = gl.createBuffer();
@@ -74,9 +74,7 @@ function main() {
 }
 
 function render() {
-
-    //let rotateMatrix = rotateX(0);
-    let defaultMatrix = mat4();
+    let defaultMatrix = rotateX(180);
 
     let modelMatrix = gl.getUniformLocation(program, "modelMatrix");
     gl.uniformMatrix4fv(modelMatrix, false, flatten(defaultMatrix));
