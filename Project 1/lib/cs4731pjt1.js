@@ -14,17 +14,21 @@ function xmlGetViewbox(xmlDoc, defaultDims) {
     //Get the viewbox attribute from the XML document.
     let viewBox = xmlDoc.getElementsByTagName("svg")[0].getAttribute("viewBox");
 
-    if(viewBox !== null) {
+    if (viewBox !== null) {
         let dims = viewBox.split(" ");
-        if(dims.length === 4) {     //A viewbox has exactly 4 dimensions
+        if (dims.length === 4) {     //A viewbox has exactly 4 dimensions
 
             //Converts every value in the array to an integer
-            let dimsToFloat = dims.map(function (x) { return parseFloat(x); });
+            let dimsToFloat = dims.map(function (x) {
+                return parseFloat(x);
+            });
 
             //Checks that every converted value is a number
-            let res = dimsToFloat.every(function(x) {return !isNaN(x);});
+            let res = dimsToFloat.every(function (x) {
+                return !isNaN(x);
+            });
 
-            if(res) splitDims = dimsToFloat;
+            if (res) splitDims = dimsToFloat;
         }
     }
     return splitDims;
@@ -46,7 +50,7 @@ function xmlGetLines(xmlDoc, defaultColor) {
     //Gets all the lines and puts them into an array
     let line = xmlDoc.getElementsByTagName("line");
 
-    if(line != null) {
+    if (line != null) {
         for (let i = 0; i < line.length; i++) {
             let thisLine = xmlDoc.getElementsByTagName("line")[i];
 
@@ -68,12 +72,11 @@ function xmlGetLines(xmlDoc, defaultColor) {
             //Check for stroke attribute
             if (stroke !== null) {
                 thisColor = hexToRgb(stroke);
-            }
-            else {
+            } else {
                 //Check for stroke information in a style attribute
                 //ex. style="fill:none;stroke:#f40000;stroke-width:1.165"
                 let style = thisLine.getAttribute("style");
-                if(style != null) {
+                if (style != null) {
                     let strokeSubstr = style.match("stroke:#[0-9A-Fa-f]{6}");
                     if (strokeSubstr != null) {
                         thisColor = hexToRgb(strokeSubstr[0].match("#[0-9A-Fa-f]{6}"));
@@ -95,8 +98,7 @@ function xmlGetLines(xmlDoc, defaultColor) {
  * @param evt The fired event that contains the uploaded file.
  * @returns {FileReader} The FileReader object for the uploaded file.
  */
-function readTextFile(evt)
-{
+function readTextFile(evt) {
     //https://stackoverflow.com/questions/35915620/uncaught-typeerror-cannot-read-property-target-of-undefined
     //https://stackoverflow.com/questions/16404327/how-to-pass-event-as-argument-to-an-inline-event-handler-in-javascript
     let file = evt.target.files[0];
@@ -118,8 +120,8 @@ function readTextFile(evt)
 function hexToRgb(hex) {
     let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
-        r: parseInt(result[1], 16)/255.0,
-        g: parseInt(result[2], 16)/255.0,
-        b: parseInt(result[3], 16)/255.0
+        r: parseInt(result[1], 16) / 255.0,
+        g: parseInt(result[2], 16) / 255.0,
+        b: parseInt(result[3], 16) / 255.0
     } : null;
 }

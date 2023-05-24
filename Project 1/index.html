@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-8"/>
     <title>Joe's Graphics Editor</title>
 
     <script id="vshader" type="x-shader/x-vertex">
@@ -13,6 +13,7 @@
             gl_Position = vPosition;
             fColor = vColor;			// Pass point color to fragment shader
         }
+
     </script>
 
     <script id="fshader" type="x-shader/x-fragment">
@@ -23,6 +24,7 @@
         {
             gl_FragColor = fColor;
         }
+
     </script>
 
     <script src="lib/webgl-utils.js"></script>
@@ -44,7 +46,7 @@
     </canvas>
 
     <form id="fileupload" enctype="multipart/form-data">
-        <input type="file" id="files" name="files[]" />
+        <input type="file" id="files" name="files[]"/>
     </form>
 
 </div>
