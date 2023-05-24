@@ -19,6 +19,18 @@ function main()
 
     //Set up the viewport
     gl.viewport( 0, 0, 400, 400);
+
+    //get the input and add a listener for file upload
+    const fileUpload = document.getElementById("files");
+    fileUpload.addEventListener("change",on_file_upload,false);
+
+    function on_file_upload()
+    {
+        //get the uploaded file
+        const file = this.files[0];
+        console.log(file.name + " uploaded!");
+
+    }
 }
 
 //todo upload an SVG
