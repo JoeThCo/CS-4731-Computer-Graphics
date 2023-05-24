@@ -40,19 +40,34 @@ function main() {
 
             //using supplied methods, get the viewbox and line info
             const view_box = xmlGetViewbox(xml_Doc, canvas.width);
-            const lines = xmlGetLines(xml_Doc, 0x000000);
+            const points = xmlGetLines(xml_Doc, 0x000000)[0];
 
-            console.log(view_box)
-            console.log(lines)
+            svg_draw(view_box, points);
         }
         reader.readAsText(file);
     }
 
     //todo render a test triangle to the screen
-    function render(view_box, lines) {
+    function svg_draw(view_box, points) {
+        console.log(view_box);
 
+        //viewbox info
+        let min_x = view_box[0];
+        let min_y = view_box[1];
+        let width = view_box[2];
+        let height = view_box[3];
+
+        gl.viewport(min_x, min_y, width, height);
+
+        for (let i = 0; i < points.length; i++) {
+            console.log(points[i]);
+        }
+
+        render();
     }
 
+    function render() {
+    }
 }
 
 //images line https://canvas.wpi.edu/courses/45717/pages/project-1-images
