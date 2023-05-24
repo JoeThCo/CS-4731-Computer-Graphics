@@ -7,9 +7,12 @@
     <script id="vshader" type="x-shader/x-vertex">
         attribute vec4 vPosition;
         attribute vec4 vColor;
+        uniform float vPointSize;
         varying vec4 fColor;
 
-        void main() {
+        void main()
+        {
+            gl_PointSize = vPointSize;
             gl_Position = vPosition;
             fColor = vColor;			// Pass point color to fragment shader
         }

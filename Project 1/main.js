@@ -1,73 +1,90 @@
+let gl;
+let points;
+let program;
+
+const POINT_SIZE = 10;
+
 function main() {
     // Retrieve <canvas> element
     let canvas = document.getElementById('webgl');
 
     // Get the rendering context for WebGL
-    let gl = WebGLUtils.setupWebGL(canvas, undefined);
-
-    //Check that the return value is not null.
+    gl = WebGLUtils.setupWebGL(canvas);
     if (!gl) {
         console.log('Failed to get the rendering context for WebGL');
         return;
     }
 
     // Initialize shaders
-    let program = initShaders(gl, "vshader", "fshader");
+    program = initShaders(gl, "vshader", "fshader");
     gl.useProgram(program);
 
     //Set up the viewport
-    gl.viewport(0, 0, 400, 400);
+    gl.viewport(0, 0, canvas.width, canvas.height);
 
-    //get the input and add a listener for file upload
-    const fileUpload = document.getElementById("files");
-    fileUpload.type = "file";
-    fileUpload.addEventListener("change", on_file_upload, false);
+    points = [];
+    points.push(vec4(-0.5, -0.5, 0.0, 1.0));
+    points.push(vec4(0.5, -0.5, 0.0, 1.0));
+    points.push(vec4(0.0, 0.5, 0.0, 1.0));
 
-    function on_file_upload(event) {
-        //get the uploaded file
-        const file = event.target.files[0];
-        console.log(file.name + " uploaded!");
+    // Create a GPU buffer for vertex data
+    let vBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);
 
-        //open the file as xml
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            //get file contents
-            const fileContent = e.target.result;
+    let vPosition = gl.getAttribLocation(program, "vPosition");
+    gl.enableVertexAttribArray(vPosition);
+    gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
 
-            //make file parser and read file as XML
-            const parser = new DOMParser();
-            const xml_Doc = parser.parseFromString(fileContent.toString(), "application/xml");
+    //color
+    let colors = [];
+    colors.push(vec4(1.0, 0.0, 0.0, 1.0));
+    colors.push(vec4(0.0, 1.0, 0.0, 1.0));
+    colors.push(vec4(0.0, 0.0, 1.0, 1.0));
 
-            //using supplied methods, get the viewbox and line info
-            const view_box = xmlGetViewbox(xml_Doc, canvas.width);
-            const points = xmlGetLines(xml_Doc, 0x000000)[0];
+    let cBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
 
-            svg_draw(view_box, points);
+    let vColor = gl.getAttribLocation(program, "vColor");
+    gl.enableVertexAttribArray(vColor);
+    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
+
+    //point size
+    let vPointSize = gl.getUniformLocation(program, "vPointSize");
+    gl.uniform1f(vPointSize, POINT_SIZE);
+    render();
+
+
+    window.onkeypress = function (event) {
+        var key = event.key;
+        switch (key) {
+            case 'a':
+                gl.clearColor(0.0, 0.0, 0.0, 1.0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+
+                gl.drawArrays(gl.POINTS, 0, points.length);
+                break;
         }
-        reader.readAsText(file);
     }
 
-    //todo render a test triangle to the screen
-    function svg_draw(view_box, points) {
-        console.log(view_box);
-
-        //viewbox info
-        let min_x = view_box[0];
-        let min_y = view_box[1];
-        let width = view_box[2];
-        let height = view_box[3];
-
-        gl.viewport(min_x, min_y, width, height);
-
-        for (let i = 0; i < points.length; i++) {
-            console.log(points[i]);
-        }
-
-        render();
-    }
-
-    function render() {
+    window.onclick = function (event) {
+        gl.clear(gl.COLOR_BUFFER_BIT);
     }
 }
 
-//images line https://canvas.wpi.edu/courses/45717/pages/project-1-images
+function render() {
+
+    //let rotateMatrix = rotateX(0);
+    let defaultMatrix = mat4();
+
+    let modelMatrix = gl.getUniformLocation(program, "modelMatrix");
+    gl.uniformMatrix4fv(modelMatrix, false, flatten(defaultMatrix));
+
+    gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.drawArrays(gl.LINE_LOOP, 0, points.length);
+
+    requestAnimationFrame(render);
+}
