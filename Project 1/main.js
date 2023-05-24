@@ -20,3 +20,8 @@ function main()
     //Set up the viewport
     gl.viewport( 0, 0, 400, 400);
 }
+
+//todo upload an SVG
+//viewbox xmlGetViewbox()
+//lines x1 y1 x2 y2 stroke style
+//images line https://canvas.wpi.edu/courses/45717/pages/project-1-images
