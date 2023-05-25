@@ -10,15 +10,21 @@
 
         varying vec4 v_fColor;
 
-        uniform mat4 u_modelMatrix;
-        uniform float u_vPointSize;
+        uniform mat4 u_view_matrix;
+        uniform mat4 u_projection_matrix;
+        uniform mat4 u_model_matrix;
+
+        uniform float u_vPoint_size;
 
         void main()
         {
-            gl_Position = u_modelMatrix * a_vPosition;
-            gl_PointSize = u_vPointSize;
-            v_fColor = a_vColor;			// Pass point color to fragment shader
+            mat4 mvp_matrix = u_view_matrix * u_projection_matrix * u_model_matrix;
+            gl_Position = mvp_matrix * a_vPosition;
+
+            gl_PointSize = u_vPoint_size;
+            v_fColor = a_vColor;
         }
+
 
     </script>
 
@@ -30,6 +36,9 @@
         {
             gl_FragColor = v_fColor;
         }
+
+
+
 
     </script>
 

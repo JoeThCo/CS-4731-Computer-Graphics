@@ -49,9 +49,41 @@ function main() {
             points = lines[0];
             colors = lines[1];
 
-            for(let i = 0; i < points.length;i++){
+            for (let i = 0; i < points.length; i++) {
                 console.log(points[i]);
             }
+
+            //numbers and "shit"
+            let left = file_view_box[0];
+            let bot = file_view_box[1];
+            let width = file_view_box[2];
+            let height = file_view_box[3];
+
+            let right = left + width;
+            let top = bot + height;
+
+            let x_distance = right - left;
+            let y_distance = top - bot;
+
+            let aspect_ratio = width / height;
+
+            let mid_x = left + (width * .5);
+            let mid_y = bot + (height * .5);
+            console.log(mid_x +  "," + mid_y);
+
+            //orthographic
+            let orthographic_matrix = ortho(left, right, bot, top, -1, 1);
+            let projection_matrix = gl.getUniformLocation(program, "u_projection_matrix");
+            gl.uniformMatrix4fv(projection_matrix, false, flatten(orthographic_matrix));
+
+            //camera info
+            let camera_position = vec3(mid_x, mid_y, -1.0);
+            let target_position = vec3(mid_x, mid_y, 0);
+            let up_vector = vec3(0, 1, 0);
+
+            let camera_matrix = lookAt(camera_position, target_position, up_vector);
+            let view_matrix = gl.getUniformLocation(program, "u_view_matrix");
+            gl.uniformMatrix4fv(view_matrix, false, flatten(camera_matrix));
 
             render();
         };
@@ -81,7 +113,7 @@ function render() {
     gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
 
     //point size
-    let vPointSize = gl.getUniformLocation(program, "u_vPointSize");
+    let vPointSize = gl.getUniformLocation(program, "u_vPoint_size");
     gl.uniform1f(vPointSize, POINT_SIZE);
 
     //matrix info
@@ -97,7 +129,7 @@ function render() {
     let translate_matrix = translate(0, 0, 0);
     model_matrix = mult(model_matrix, translate_matrix);
 
-    let modelMatrix = gl.getUniformLocation(program, "u_modelMatrix");
+    let modelMatrix = gl.getUniformLocation(program, "u_model_matrix");
     gl.uniformMatrix4fv(modelMatrix, false, flatten(model_matrix));
 
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
