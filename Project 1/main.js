@@ -4,7 +4,9 @@ let program;
 let points = [];
 let colors = [];
 
-let image_scale = 1;
+let image_scale_x = 1;
+let image_scale_y = 1;
+
 
 const POINT_SIZE = 25;
 
@@ -45,13 +47,10 @@ function main() {
             let file_view_box = xmlGetViewbox(xml_doc, 400);
             let lines = xmlGetLines(xml_doc, 0x000000);
 
+            console.log("~~~~~~~~~~~~~~~~~~~~~~~~~");
             console.log("ViewBox: " + file_view_box);
             points = lines[0];
             colors = lines[1];
-
-            for (let i = 0; i < points.length; i++) {
-                console.log(points[i]);
-            }
 
             //numbers and "shit"
             let left = file_view_box[0];
@@ -62,14 +61,18 @@ function main() {
             let right = left + width;
             let top = bot + height;
 
+            let aspect_ratio = width / height;
+
             let x_distance = right - left;
             let y_distance = top - bot;
 
-            let aspect_ratio = width / height;
-
             let mid_x = left + (width * .5);
             let mid_y = bot + (height * .5);
-            console.log(mid_x +  "," + mid_y);
+            console.log("Mid: " + mid_x + "," + mid_y);
+
+            image_scale_x = 1 / (x_distance * .5);
+            image_scale_y = 1 / (y_distance * .5);
+            console.log("Scale: " + image_scale_x + "," + image_scale_y);
 
             //orthographic
             let orthographic_matrix = ortho(left, right, bot, top, -1, 1);
@@ -77,7 +80,7 @@ function main() {
             gl.uniformMatrix4fv(projection_matrix, false, flatten(orthographic_matrix));
 
             //camera info
-            let camera_position = vec3(mid_x, mid_y, -1.0);
+            let camera_position = vec3(mid_x, mid_y, -1);
             let target_position = vec3(mid_x, mid_y, 0);
             let up_vector = vec3(0, 1, 0);
 
@@ -94,7 +97,6 @@ function main() {
 
 function render() {
     //points
-    // Create a GPU buffer for vertex data
     let vBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);
@@ -120,7 +122,7 @@ function render() {
     let start_matrix = rotateX(180);
 
     //srt
-    let scale_matrix = scalem(image_scale, image_scale, image_scale);
+    let scale_matrix = scalem(image_scale_x, image_scale_y, 1.0);
     let model_matrix = mult(start_matrix, scale_matrix);
 
     let rotation_matrix = rotateZ(0);
