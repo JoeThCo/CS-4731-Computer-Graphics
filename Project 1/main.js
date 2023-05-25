@@ -1,6 +1,8 @@
 let gl;
-let points;
 let program;
+
+let points;
+let colors;
 
 const POINT_SIZE = 10;
 
@@ -22,39 +24,35 @@ function main() {
     //Set up the viewport
     gl.viewport(0, 0, canvas.width, canvas.height);
 
-    points = [];
-    points.push(vec4(-1.0, -1.0, 0.0, 1.0));
-    points.push(vec4(1.0, -1.0, 0.0, 1.0));
-    points.push(vec4(0.0, 1.0, 0.0, 1.0));
+    //get input and add listener
+    const file_input = document.getElementById("fileupload");
+    file_input.type = "file";
 
-    // Create a GPU buffer for vertex data
-    let vBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);
+    file_input.addEventListener("change", on_file_upload, false);
 
-    let vPosition = gl.getAttribLocation(program, "a_vPosition");
-    gl.enableVertexAttribArray(vPosition);
-    gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
-
-    //color
-    let colors = [];
-    colors.push(vec4(1.0, 0.0, 0.0, 1.0));
-    colors.push(vec4(0.0, 1.0, 0.0, 1.0));
-    colors.push(vec4(0.0, 0.0, 1.0, 1.0));
-
-    let cBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
-
-    let vColor = gl.getAttribLocation(program, "a_vColor");
-    gl.enableVertexAttribArray(vColor);
-    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
-
-    //point size
-    let vPointSize = gl.getUniformLocation(program, "u_vPointSize");
-    gl.uniform1f(vPointSize, POINT_SIZE);
     render();
 
+    function on_file_upload(event) {
+        let reader = new FileReader();
+
+        reader.onload = function (event) {
+            //convert file -> xml
+            const parser = new DOMParser();
+            const xml_doc = parser.parseFromString(event.target.result, "application/xml");
+
+            let file_view_box = xmlGetViewbox(xml_doc, 400);
+            let file_points = xmlGetLines(xml_doc, 0x000000)[0];
+
+            console.log(file_view_box);
+            console.log(file_points);
+
+            for (let i = 0; i < file_points.length; i++) {
+
+            }
+        };
+
+        reader.readAsText(event.target.files[0]);
+    }
 
     window.onkeypress = function (event) {
         var key = event.key;
@@ -73,12 +71,40 @@ function main() {
     }
 }
 
-let alpha = 0;
-
 function render() {
-    //let sin = Math.sin(alpha);
-    //let cos = Math.cos(alpha);
+    points = [];
+    points.push(vec4(-1.0, -1.0, 0.0, 1.0));
+    points.push(vec4(1.0, -1.0, 0.0, 1.0));
+    points.push(vec4(0.0, 1.0, 0.0, 1.0));
 
+    // Create a GPU buffer for vertex data
+    let vBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);
+
+    let vPosition = gl.getAttribLocation(program, "a_vPosition");
+    gl.enableVertexAttribArray(vPosition);
+    gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
+
+    //color
+    colors = [];
+    colors.push(vec4(1.0, 0.0, 0.0, 1.0));
+    colors.push(vec4(0.0, 1.0, 0.0, 1.0));
+    colors.push(vec4(0.0, 0.0, 1.0, 1.0));
+
+    let cBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
+
+    let vColor = gl.getAttribLocation(program, "a_vColor");
+    gl.enableVertexAttribArray(vColor);
+    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
+
+    //point size
+    let vPointSize = gl.getUniformLocation(program, "u_vPointSize");
+    gl.uniform1f(vPointSize, POINT_SIZE);
+
+    //matrix info
     let start_matrix = rotateX(180);
 
     //srt
