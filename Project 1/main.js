@@ -4,7 +4,7 @@ let program;
 let points = [];
 let colors = [];
 
-let image_scale = .25;
+let image_scale = 1;
 
 const POINT_SIZE = 25;
 
@@ -89,16 +89,16 @@ function render() {
 
     //srt
     let scale_matrix = scalem(image_scale, image_scale, image_scale);
-    let output_matrix = mult(start_matrix, scale_matrix);
+    let model_matrix = mult(start_matrix, scale_matrix);
 
     let rotation_matrix = rotateZ(0);
-    output_matrix = mult(output_matrix, rotation_matrix);
+    model_matrix = mult(model_matrix, rotation_matrix);
 
     let translate_matrix = translate(0, 0, 0);
-    output_matrix = mult(output_matrix, translate_matrix);
+    model_matrix = mult(model_matrix, translate_matrix);
 
     let modelMatrix = gl.getUniformLocation(program, "u_modelMatrix");
-    gl.uniformMatrix4fv(modelMatrix, false, flatten(output_matrix));
+    gl.uniformMatrix4fv(modelMatrix, false, flatten(model_matrix));
 
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
