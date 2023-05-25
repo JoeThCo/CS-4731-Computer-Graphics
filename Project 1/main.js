@@ -4,7 +4,7 @@ let program;
 let points = [];
 let colors = [];
 
-let image_scale = 1;
+let image_scale = .25;
 
 const POINT_SIZE = 25;
 
@@ -43,20 +43,16 @@ function main() {
             const xml_doc = parser.parseFromString(event.target.result, "application/xml");
 
             let file_view_box = xmlGetViewbox(xml_doc, 400);
-            let file_points = xmlGetLines(xml_doc, 0x000000)[0];
+            let lines = xmlGetLines(xml_doc, 0x000000);
 
             console.log("ViewBox: " + file_view_box);
-            //console.log(file_points);
-            points = file_points;
+            points = lines[0];
+            colors = lines[1];
 
             for(let i = 0; i < points.length;i++){
                 console.log(points[i]);
             }
 
-            for(let i = 0;i < points.length;i++)
-            {
-                colors.push(vec4(0.0,0.0,0.0,1.0));
-            }
             render();
         };
 
@@ -65,11 +61,7 @@ function main() {
 }
 
 function render() {
-    //points = [];
-    //points.push(vec4(-1.0, -1.0, 0.0, 1.0));
-    //points.push(vec4(1.0, -1.0, 0.0, 1.0));
-    //points.push(vec4(0.0, 1.0, 0.0, 1.0));
-
+    //points
     // Create a GPU buffer for vertex data
     let vBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
@@ -80,11 +72,6 @@ function render() {
     gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
 
     //color
-    //colors = [];
-    //colors.push(vec4(0.0, 0.0, 0.0, 1.0));
-    //colors.push(vec4(0.0, 0.0, 0.0, 1.0));
-    //colors.push(vec4(0.0, 0.0, 0.0, 1.0));
-
     let cBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
@@ -116,7 +103,7 @@ function render() {
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.drawArrays(gl.LINE_LOOP, 0, points.length);
+    gl.drawArrays(gl.LINES, 0, points.length);
 
     requestAnimationFrame(render);
 }
