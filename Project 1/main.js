@@ -1,10 +1,12 @@
 let gl;
 let program;
 
-let points;
-let colors;
+let points = [];
+let colors = [];
 
-const POINT_SIZE = 10;
+let image_scale = 1;
+
+const POINT_SIZE = 25;
 
 function main() {
     // Retrieve <canvas> element
@@ -30,7 +32,7 @@ function main() {
 
     file_input.addEventListener("change", on_file_upload, false);
 
-    render();
+    //render();
 
     function on_file_upload(event) {
         let reader = new FileReader();
@@ -43,39 +45,30 @@ function main() {
             let file_view_box = xmlGetViewbox(xml_doc, 400);
             let file_points = xmlGetLines(xml_doc, 0x000000)[0];
 
-            console.log(file_view_box);
-            console.log(file_points);
+            console.log("ViewBox: " + file_view_box);
+            //console.log(file_points);
+            points = file_points;
 
-            for (let i = 0; i < file_points.length; i++) {
-
+            for(let i = 0; i < points.length;i++){
+                console.log(points[i]);
             }
+
+            for(let i = 0;i < points.length;i++)
+            {
+                colors.push(vec4(0.0,0.0,0.0,1.0));
+            }
+            render();
         };
 
         reader.readAsText(event.target.files[0]);
     }
-
-    window.onkeypress = function (event) {
-        var key = event.key;
-        switch (key) {
-            case 'a':
-                gl.clearColor(0.0, 0.0, 0.0, 1.0);
-                gl.clear(gl.COLOR_BUFFER_BIT);
-
-                gl.drawArrays(gl.POINTS, 0, points.length);
-                break;
-        }
-    }
-
-    window.onclick = function (event) {
-        gl.clear(gl.COLOR_BUFFER_BIT);
-    }
 }
 
 function render() {
-    points = [];
-    points.push(vec4(-1.0, -1.0, 0.0, 1.0));
-    points.push(vec4(1.0, -1.0, 0.0, 1.0));
-    points.push(vec4(0.0, 1.0, 0.0, 1.0));
+    //points = [];
+    //points.push(vec4(-1.0, -1.0, 0.0, 1.0));
+    //points.push(vec4(1.0, -1.0, 0.0, 1.0));
+    //points.push(vec4(0.0, 1.0, 0.0, 1.0));
 
     // Create a GPU buffer for vertex data
     let vBuffer = gl.createBuffer();
@@ -84,13 +77,13 @@ function render() {
 
     let vPosition = gl.getAttribLocation(program, "a_vPosition");
     gl.enableVertexAttribArray(vPosition);
-    gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
 
     //color
-    colors = [];
-    colors.push(vec4(1.0, 0.0, 0.0, 1.0));
-    colors.push(vec4(0.0, 1.0, 0.0, 1.0));
-    colors.push(vec4(0.0, 0.0, 1.0, 1.0));
+    //colors = [];
+    //colors.push(vec4(0.0, 0.0, 0.0, 1.0));
+    //colors.push(vec4(0.0, 0.0, 0.0, 1.0));
+    //colors.push(vec4(0.0, 0.0, 0.0, 1.0));
 
     let cBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
@@ -108,7 +101,7 @@ function render() {
     let start_matrix = rotateX(180);
 
     //srt
-    let scale_matrix = scalem(1, 1, 1);
+    let scale_matrix = scalem(image_scale, image_scale, image_scale);
     let output_matrix = mult(start_matrix, scale_matrix);
 
     let rotation_matrix = rotateZ(0);
