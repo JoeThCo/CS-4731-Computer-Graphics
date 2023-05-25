@@ -5,30 +5,30 @@
     <title>Joe's Graphics Editor</title>
 
     <script id="vshader" type="x-shader/x-vertex">
-        attribute vec4 vPosition;
-        attribute vec4 vColor;
+        attribute vec4 a_vPosition;
+        attribute vec4 a_vColor;
 
-        varying vec4 fColor;
+        varying vec4 v_fColor;
 
-        uniform mat4 modelMatrix;
-        uniform float vPointSize;
+        uniform mat4 u_modelMatrix;
+        uniform float u_vPointSize;
 
         void main()
         {
-            gl_Position = modelMatrix * vPosition;
-            gl_PointSize = vPointSize;
-            fColor = vColor;			// Pass point color to fragment shader
+            gl_Position = u_modelMatrix * a_vPosition;
+            gl_PointSize = u_vPointSize;
+            v_fColor = a_vColor;			// Pass point color to fragment shader
         }
 
     </script>
 
     <script id="fshader" type="x-shader/x-fragment">
         precision mediump float;
-        varying vec4 fColor;
+        varying vec4 v_fColor;
 
         void main()
         {
-            gl_FragColor = fColor;
+            gl_FragColor = v_fColor;
         }
 
     </script>

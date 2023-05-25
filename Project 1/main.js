@@ -32,7 +32,7 @@ function main() {
     gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);
 
-    let vPosition = gl.getAttribLocation(program, "vPosition");
+    let vPosition = gl.getAttribLocation(program, "a_vPosition");
     gl.enableVertexAttribArray(vPosition);
     gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
 
@@ -46,12 +46,12 @@ function main() {
     gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
 
-    let vColor = gl.getAttribLocation(program, "vColor");
+    let vColor = gl.getAttribLocation(program, "a_vColor");
     gl.enableVertexAttribArray(vColor);
     gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
 
     //point size
-    let vPointSize = gl.getUniformLocation(program, "vPointSize");
+    let vPointSize = gl.getUniformLocation(program, "u_vPointSize");
     gl.uniform1f(vPointSize, POINT_SIZE);
     render();
 
@@ -73,11 +73,26 @@ function main() {
     }
 }
 
-function render() {
-    let defaultMatrix = rotateX(180);
+let alpha = 0;
 
-    let modelMatrix = gl.getUniformLocation(program, "modelMatrix");
-    gl.uniformMatrix4fv(modelMatrix, false, flatten(defaultMatrix));
+function render() {
+    //let sin = Math.sin(alpha);
+    //let cos = Math.cos(alpha);
+
+    let start_matrix = rotateX(180);
+
+    //srt
+    let scale_matrix = scalem(1, 1, 1);
+    let output_matrix = mult(start_matrix, scale_matrix);
+
+    let rotation_matrix = rotateZ(0);
+    output_matrix = mult(output_matrix, rotation_matrix);
+
+    let translate_matrix = translate(0, 0, 0);
+    output_matrix = mult(output_matrix, translate_matrix);
+
+    let modelMatrix = gl.getUniformLocation(program, "u_modelMatrix");
+    gl.uniformMatrix4fv(modelMatrix, false, flatten(output_matrix));
 
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
