@@ -7,6 +7,9 @@ let colors = [];
 let image_scale_x = 1;
 let image_scale_y = 1;
 
+let image_translate_x = 0;
+let image_translate_y = 0;
+
 
 const POINT_SIZE = 25;
 
@@ -52,36 +55,23 @@ function main() {
             points = lines[0];
             colors = lines[1];
 
-            //numbers and "shit"
+            //numbers
             let left = file_view_box[0];
             let bot = file_view_box[1];
             let width = file_view_box[2];
             let height = file_view_box[3];
 
-            let right = left + width;
-            let top = bot + height;
+            image_scale_x = 1 / (width * .5);
+            image_scale_y = 1 / (height * .5);
+            console.log("Scale:" + image_scale_x + "," + image_scale_y);
 
-            let aspect_ratio = width / height;
-
-            let x_distance = right - left;
-            let y_distance = top - bot;
-
-            let mid_x = left + (width * .5);
-            let mid_y = bot + (height * .5);
-            console.log("Mid: " + mid_x + "," + mid_y);
-
-            image_scale_x = 1 / (x_distance * .5);
-            image_scale_y = 1 / (y_distance * .5);
-            console.log("Scale: " + image_scale_x + "," + image_scale_y);
-
-            //orthographic
-            let orthographic_matrix = ortho(left, right, bot, top, -1, 1);
-            let projection_matrix = gl.getUniformLocation(program, "u_projection_matrix");
-            gl.uniformMatrix4fv(projection_matrix, false, flatten(orthographic_matrix));
+            image_translate_x = (width * .5) + left;
+            image_translate_y = (height * .5) + bot;
+            console.log("Translate:" + image_translate_x + "," + image_translate_y);
 
             //camera info
-            let camera_position = vec3(mid_x, mid_y, -1);
-            let target_position = vec3(mid_x, mid_y, 0);
+            let camera_position = vec3(0, 0, -1);
+            let target_position = vec3(0, 0, 0);
             let up_vector = vec3(0, 1, 0);
 
             let camera_matrix = lookAt(camera_position, target_position, up_vector);
@@ -128,7 +118,7 @@ function render() {
     let rotation_matrix = rotateZ(0);
     model_matrix = mult(model_matrix, rotation_matrix);
 
-    let translate_matrix = translate(0, 0, 0);
+    let translate_matrix = translate(-image_translate_x, -image_translate_y, 0);
     model_matrix = mult(model_matrix, translate_matrix);
 
     let modelMatrix = gl.getUniformLocation(program, "u_model_matrix");
