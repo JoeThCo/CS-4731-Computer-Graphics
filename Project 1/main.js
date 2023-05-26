@@ -4,14 +4,26 @@ let program;
 let points = [];
 let colors = [];
 
+//image info
 let image_scale_x = 1;
 let image_scale_y = 1;
-
 let image_translate_x = 0;
 let image_translate_y = 0;
 
+//user input info
+let user_scale = 0;
+let user_translate_x = 0;
+let user_translate_y = 0;
+let user_rotate = 0;
+
+const MIN_SCALE = .1
+const MAX_SCALE = 10;
 
 const POINT_SIZE = 25;
+
+function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+}
 
 function main() {
     // Retrieve <canvas> element
@@ -108,17 +120,17 @@ function render() {
     let vPointSize = gl.getUniformLocation(program, "u_vPoint_size");
     gl.uniform1f(vPointSize, POINT_SIZE);
 
-    //matrix info
-    let start_matrix = rotateX(180);
+
+    let model_matrix = mat4();
 
     //srt
-    let scale_matrix = scalem(image_scale_x, image_scale_y, 1.0);
-    let model_matrix = mult(start_matrix, scale_matrix);
+    let scale_matrix = scalem(image_scale_x + user_scale, image_scale_y + user_scale, 1.0);
+    model_matrix = mult(model_matrix, scale_matrix);
 
-    let rotation_matrix = rotateZ(0);
+    let rotation_matrix = rotateZ(180 + user_rotate);
     model_matrix = mult(model_matrix, rotation_matrix);
 
-    let translate_matrix = translate(-image_translate_x, -image_translate_y, 0);
+    let translate_matrix = translate(-image_translate_x + user_translate_x, -image_translate_y + user_translate_y, 0);
     model_matrix = mult(model_matrix, translate_matrix);
 
     let modelMatrix = gl.getUniformLocation(program, "u_model_matrix");
