@@ -11,15 +11,23 @@ let image_translate_x = 0;
 let image_translate_y = 0;
 
 //user input info
-let user_scale = 0;
+let user_scale = 1;
 let user_translate_x = 0;
 let user_translate_y = 0;
 let user_rotate = 0;
+let is_shift_pressed_down = false;
+let is_dragging_mouse = false;
+let last_mouse_x = 0;
+let last_mouse_y = 0;
 
+const ROTATE_CHANGE = 2.5;
+
+const SCALE_CHANGE = .05;
 const MIN_SCALE = .1
 const MAX_SCALE = 10;
 
 const POINT_SIZE = 25;
+
 
 function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
@@ -49,7 +57,74 @@ function main() {
 
     file_input.addEventListener("change", on_file_upload, false);
 
-    //render();
+    //on key down
+    window.addEventListener("keydown", function (event) {
+        const key = event.key;
+        if (key === 'r') {
+            reset_user_input();
+        } else if (key === 'Shift') {
+            is_shift_pressed_down = true;
+        }
+    })
+
+    //on key up
+    window.addEventListener("keyup", function (event) {
+        if (event.key === 'Shift') {
+            is_shift_pressed_down = false;
+        }
+    })
+
+    //scrollwheel
+    canvas.addEventListener("wheel", function (event) {
+        const delta = Math.sign(event.deltaY);
+
+        //scale
+        if (is_shift_pressed_down) {
+            //scroll down
+            if (delta > 0) {
+                on_scale(-SCALE_CHANGE)
+            }
+            //scroll up
+            else {
+                on_scale(SCALE_CHANGE)
+            }
+        }
+        //rotate
+        else {
+            //scroll down
+            if (delta > 0) {
+                on_rotate(-ROTATE_CHANGE)
+            }
+            //scroll up
+            else {
+                on_rotate(ROTATE_CHANGE)
+            }
+        }
+    })
+
+    //mouse down
+    canvas.addEventListener("mousedown", function (event) {
+        is_dragging_mouse = true;
+        last_mouse_x = event.clientX;
+        last_mouse_y = event.clientY;
+    })
+
+    //mouse move
+    canvas.addEventListener("mousemove", function (event) {
+        let delta_x = event.clientX - last_mouse_x;
+        let delta_y = event.clientY - last_mouse_y;
+
+        //action here
+
+        last_mouse_x = event.clientX;
+        last_mouse_y = event.clientY;
+    })
+
+    canvas.addEventListener("mouseup", function (event) {
+        is_dragging_mouse = false;
+    })
+
+    render();
 
     function on_file_upload(event) {
         let reader = new FileReader();
@@ -97,6 +172,31 @@ function main() {
     }
 }
 
+function on_scale(change) {
+    user_scale += change;
+
+    user_scale = clamp(user_scale, MIN_SCALE, MAX_SCALE);
+
+    //scaling code goes here
+}
+
+function on_rotate(change) {
+    user_rotate += change;
+
+    //rotate code codes here
+}
+
+function reset_user_input() {
+    console.log("Reset!")
+
+    user_scale = 1;
+    user_translate_x = 0;
+    user_translate_y = 0;
+    user_rotate = 0;
+
+    render();
+}
+
 function render() {
     //points
     let vBuffer = gl.createBuffer();
@@ -120,11 +220,10 @@ function render() {
     let vPointSize = gl.getUniformLocation(program, "u_vPoint_size");
     gl.uniform1f(vPointSize, POINT_SIZE);
 
-
     let model_matrix = mat4();
 
     //srt
-    let scale_matrix = scalem(image_scale_x + user_scale, image_scale_y + user_scale, 1.0);
+    let scale_matrix = scalem(image_scale_x * user_scale, image_scale_y * user_scale, 1.0);
     model_matrix = mult(model_matrix, scale_matrix);
 
     let rotation_matrix = rotateZ(180 + user_rotate);
