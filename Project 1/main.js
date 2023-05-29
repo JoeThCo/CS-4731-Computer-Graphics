@@ -131,6 +131,7 @@ function main() {
 
     function on_file_upload(event) {
         let reader = new FileReader();
+        reset_user_input();
 
         reader.onload = function (event) {
             //convert file -> xml
@@ -196,8 +197,6 @@ function on_rotate(change) {
 }
 
 function reset_user_input() {
-    console.log("Reset!")
-
     user_scale = 1;
     user_translate_x = 0;
     user_translate_y = 0;
@@ -206,29 +205,44 @@ function reset_user_input() {
     render();
 }
 
-function render() {
+function point_size_uniform() {
+    //point size
+    let vertex_point_size = gl.getUniformLocation(program, "u_vPoint_size");
+    gl.uniform1f(vertex_point_size, POINT_SIZE);
+}
+
+function position_attribute() {
+    let vertex_Position = gl.getAttribLocation(program, "a_vPosition");
+    gl.enableVertexAttribArray(vertex_Position);
+    gl.vertexAttribPointer(vertex_Position, 2, gl.FLOAT, false, 0, 0);
+}
+
+function color_attribute() {
+    let vertex_Color = gl.getAttribLocation(program, "a_vColor");
+    gl.enableVertexAttribArray(vertex_Color);
+    gl.vertexAttribPointer(vertex_Color, 4, gl.FLOAT, false, 0, 0);
+}
+
+function color_buffer() {
+    //color
+    let color_Buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, color_Buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
+}
+
+function vertex_buffer() {
     //points
     let vBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);
+}
 
-    let vPosition = gl.getAttribLocation(program, "a_vPosition");
-    gl.enableVertexAttribArray(vPosition);
-    gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
+function model_matrix_uniform(model_matrix) {
+    let modelMatrix = gl.getUniformLocation(program, "u_model_matrix");
+    gl.uniformMatrix4fv(modelMatrix, false, flatten(model_matrix));
+}
 
-    //color
-    let cBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
-
-    let vColor = gl.getAttribLocation(program, "a_vColor");
-    gl.enableVertexAttribArray(vColor);
-    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
-
-    //point size
-    let vPointSize = gl.getUniformLocation(program, "u_vPoint_size");
-    gl.uniform1f(vPointSize, POINT_SIZE);
-
+function model_matrix_uniform() {
     let model_matrix = mat4();
 
     //srt
@@ -243,11 +257,27 @@ function render() {
 
     let modelMatrix = gl.getUniformLocation(program, "u_model_matrix");
     gl.uniformMatrix4fv(modelMatrix, false, flatten(model_matrix));
+}
 
+function drawing() {
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-
     gl.drawArrays(gl.LINES, 0, points.length);
-
     requestAnimationFrame(render);
+}
+
+function render() {
+    //position
+    vertex_buffer();
+    position_attribute();
+
+    //color
+    color_buffer();
+    color_attribute();
+
+    //uniforms
+    point_size_uniform();
+    model_matrix_uniform();
+
+    drawing();
 }
