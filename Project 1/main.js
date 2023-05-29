@@ -158,13 +158,11 @@ function main() {
             let aspect_ratio = width / height;
             console.log("Aspect Ratio: " + aspect_ratio);
 
-            let desired_width = CANVAS_SIZE;
-            let desired_height = canvas.width / aspect_ratio;
+            let projection_matrix = ortho(-1, 1, -1, 1, -1, 1);
+            let projection_matrix_location = gl.getUniformLocation(program, "u_projection_matrix");
+            gl.uniformMatrix4fv(projection_matrix_location, false, flatten(projection_matrix));
 
-            canvas.width = CANVAS_SIZE;
-            canvas.height = CANVAS_SIZE;
-
-            gl.viewport(0, 0, desired_width, desired_height);
+            gl.viewport(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
             image_scale_x = 1 / (width * .5);
             image_scale_y = 1 / (height * .5);
