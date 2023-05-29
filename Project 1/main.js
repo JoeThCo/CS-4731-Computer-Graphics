@@ -1,8 +1,11 @@
 let gl;
 let program;
 
+//arrays
 let points = [];
 let colors = [];
+
+let model_matrix;
 
 //image info
 let image_scale_x = 1;
@@ -28,7 +31,7 @@ const MIN_SCALE = .1
 const MAX_SCALE = 10;
 
 const POINT_SIZE = 25;
-
+const CANVAS_SIZE = 400;
 
 function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
@@ -48,9 +51,6 @@ function main() {
     // Initialize shaders
     program = initShaders(gl, "vshader", "fshader");
     gl.useProgram(program);
-
-    //Set up the viewport
-    gl.viewport(0, 0, canvas.width, canvas.height);
 
     //get input and add listener
     const file_input = document.getElementById("fileupload");
@@ -152,6 +152,18 @@ function main() {
             let width = file_view_box[2];
             let height = file_view_box[3];
 
+            //Set up the viewport with correct aspect ratio
+            let aspect_ratio = width / height;
+            console.log("Aspect Ratio: " + aspect_ratio);
+
+            let desired_width = CANVAS_SIZE;
+            let desired_height = canvas.width / aspect_ratio;
+
+            canvas.width = CANVAS_SIZE;
+            canvas.height = CANVAS_SIZE;
+
+            gl.viewport(0, 0, desired_width, desired_height);
+
             image_scale_x = 1 / (width * .5);
             image_scale_y = 1 / (height * .5);
             console.log("Scale:" + image_scale_x + "," + image_scale_y);
@@ -192,9 +204,12 @@ function on_scale(change) {
 }
 
 function on_rotate(change) {
-    user_rotate += change;
 
     //rotate code codes here
+    //move to origin
+    user_rotate += change;
+
+    requestAnimationFrame(render);
 }
 
 function reset_user_input() {
@@ -238,13 +253,8 @@ function vertex_buffer() {
     gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);
 }
 
-function model_matrix_uniform(model_matrix) {
-    let modelMatrix = gl.getUniformLocation(program, "u_model_matrix");
-    gl.uniformMatrix4fv(modelMatrix, false, flatten(model_matrix));
-}
-
 function model_matrix_uniform() {
-    let model_matrix = mat4();
+    model_matrix = mat4();
 
     //srt
     let scale_matrix = scalem(image_scale_x * user_scale, image_scale_y * user_scale, 1.0);
@@ -278,6 +288,7 @@ function render() {
 
     //uniforms
     point_size_uniform();
+    model_matrix_uniform();
 
     drawing();
 }
