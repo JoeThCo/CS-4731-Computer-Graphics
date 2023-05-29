@@ -170,6 +170,7 @@ function main() {
             gl.uniformMatrix4fv(view_matrix, false, flatten(camera_matrix));
 
             render();
+            model_matrix_uniform();
         };
 
         reader.readAsText(event.target.files[0]);
@@ -277,7 +278,6 @@ function render() {
 
     //uniforms
     point_size_uniform();
-    model_matrix_uniform();
 
     drawing();
 }
