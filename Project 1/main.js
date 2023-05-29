@@ -172,14 +172,7 @@ function main() {
             image_translate_y = (height * .5) + bot;
             console.log("Translate:" + image_translate_x + "," + image_translate_y);
 
-            //camera info
-            let camera_position = vec3(0, 0, -1);
-            let target_position = vec3(0, 0, 0);
-            let up_vector = vec3(0, 1, 0);
-
-            let camera_matrix = lookAt(camera_position, target_position, up_vector);
-            let view_matrix = gl.getUniformLocation(program, "u_view_matrix");
-            gl.uniformMatrix4fv(view_matrix, false, flatten(camera_matrix));
+            camera_uniform();
 
             render();
             model_matrix_uniform();
@@ -242,6 +235,17 @@ function vertex_buffer() {
     let vBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);
+}
+
+function camera_uniform() {
+    //camera info
+    let camera_position = vec3(0, 0, -1);
+    let target_position = vec3(0, 0, 0);
+    let up_vector = vec3(0, 1, 0);
+
+    let camera_matrix = lookAt(camera_position, target_position, up_vector);
+    let view_matrix = gl.getUniformLocation(program, "u_view_matrix");
+    gl.uniformMatrix4fv(view_matrix, false, flatten(camera_matrix));
 }
 
 function model_matrix_uniform() {
