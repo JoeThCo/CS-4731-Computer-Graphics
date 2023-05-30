@@ -184,8 +184,8 @@ function on_mouse_drag(event) {
     delta_y = current_y - previous_y;
 
     //scale the delta
-    delta_x *= 1 / CANVAS_SIZE * width * aspect_ratio;
-    delta_y *= 1 / CANVAS_SIZE * height * aspect_ratio;
+    delta_x *= 1 / (CANVAS_SIZE * aspect_ratio) / user_scale * width;
+    delta_y *= 1 / (CANVAS_SIZE * aspect_ratio) / user_scale * height;
 
     //apply the delta
     user_translate_x += delta_x;
