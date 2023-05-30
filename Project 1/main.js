@@ -184,8 +184,8 @@ function on_mouse_drag(event) {
     delta_y = current_y - previous_y;
 
     //scale the delta
-    delta_x *= 1 / (CANVAS_SIZE * aspect_ratio) / user_scale * width;
-    delta_y *= 1 / (CANVAS_SIZE * aspect_ratio) / user_scale * height;
+    delta_x *= 1 / (CANVAS_SIZE * aspect_ratio) * width;
+    delta_y *= 1 / (CANVAS_SIZE * aspect_ratio) * height;
 
     //apply the delta
     user_translate_x -= delta_x;
@@ -265,13 +265,12 @@ function camera_uniform() {
 function model_matrix_uniform() {
     model_matrix = mat4();
 
-    //translate to origin (x, y)
-    let current_x = user_translate_x - svg_mid_x;
-    let current_y = user_translate_y - svg_mid_y;
-    console.log(current_x + "," + current_y);
-    model_matrix = translate(0, 0, 0);
-
     //TRS
+
+    //translate to origin (x, y)
+    let current_x = user_translate_x;
+    let current_y = user_translate_y;
+
     let translate_matrix = translate(current_x, current_y, 0);
     model_matrix = mult(model_matrix, translate_matrix);
 
@@ -280,6 +279,8 @@ function model_matrix_uniform() {
 
     let scale_matrix = scalem(image_scale_x * user_scale, image_scale_y * user_scale, 1.0);
     model_matrix = mult(model_matrix, scale_matrix);
+
+    //move from origin back to input coords
 
     let modelMatrix = gl.getUniformLocation(program, "u_model_matrix");
     gl.uniformMatrix4fv(modelMatrix, false, flatten(model_matrix));
