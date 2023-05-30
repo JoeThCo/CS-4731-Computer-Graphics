@@ -160,7 +160,7 @@ function main() {
             let projection_matrix_location = gl.getUniformLocation(program, "u_projection_matrix");
             gl.uniformMatrix4fv(projection_matrix_location, false, flatten(projection_matrix));
 
-            gl.viewport(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            gl.viewport(0, 0, CANVAS_SIZE, CANVAS_SIZE / aspect_ratio);
 
             image_scale_x = 1 / (width * .5);
             image_scale_y = 1 / (height * .5);
