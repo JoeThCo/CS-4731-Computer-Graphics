@@ -268,8 +268,8 @@ function model_matrix_uniform() {
     //TRS
 
     //translate to origin (x, y)
-    let current_x = user_translate_x;
-    let current_y = user_translate_y;
+    let current_x = user_translate_x + (svg_mid_x * image_scale_x);
+    let current_y = user_translate_y + (svg_mid_y * image_scale_y);
 
     let translate_matrix = translate(current_x, current_y, 0);
     model_matrix = mult(model_matrix, translate_matrix);
