@@ -8,8 +8,6 @@ let colors = [];
 let model_matrix;
 
 //image info
-let current_x = 0;
-let current_y = 0;
 let image_scale_x = 1;
 let image_scale_y = 1;
 let image_translate_x = 0;
@@ -185,15 +183,24 @@ function main() {
 function on_mouse_drag(delta_x, delta_y) {
     user_translate_x += delta_x;
     user_translate_y += delta_y;
+
+    //translate code goes here
 }
 
 function on_scale(change) {
     user_scale += change;
+
     user_scale = clamp(user_scale, MIN_SCALE, MAX_SCALE);
+    //scaling code goes here
 }
 
 function on_rotate(change) {
+
+    //rotate code codes here
+    //move to origin
     user_rotate += change;
+
+    requestAnimationFrame(render);
 }
 
 function reset_user_input() {
@@ -251,12 +258,6 @@ function camera_uniform() {
 function model_matrix_uniform() {
     model_matrix = mat4();
 
-    current_x = -image_translate_x + user_translate_x;
-    current_y = -image_translate_y + user_translate_y;
-
-    //negate the current position to the origin (0,0)
-    //model_matrix = mult(model_matrix, translate(-current_x, -current_y, 0.0));
-
     //srt
     let scale_matrix = scalem(image_scale_x * user_scale, image_scale_y * user_scale, 1.0);
     model_matrix = mult(model_matrix, scale_matrix);
@@ -264,7 +265,7 @@ function model_matrix_uniform() {
     let rotation_matrix = rotateZ(180 + user_rotate);
     model_matrix = mult(model_matrix, rotation_matrix);
 
-    let translate_matrix = translate(current_x, current_y, 0);
+    let translate_matrix = translate(-image_translate_x + user_translate_x, -image_translate_y + user_translate_y, 0);
     model_matrix = mult(model_matrix, translate_matrix);
 
     let modelMatrix = gl.getUniformLocation(program, "u_model_matrix");
