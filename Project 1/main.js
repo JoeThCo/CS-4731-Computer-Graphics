@@ -64,6 +64,7 @@ function main() {
         const key = event.key;
         if (key === 'r') {
             reset_user_input();
+            requestAnimationFrame(render);
         } else if (key === 'Shift') {
             is_shift_pressed_down = true;
         }
@@ -165,9 +166,6 @@ function main() {
             svg_mid_y = (height * .5) + bot;
             console.log("Translate:" + svg_mid_x + "," + svg_mid_y);
 
-            camera_uniform();
-            model_matrix_uniform();
-
             render();
         };
 
@@ -214,9 +212,7 @@ function reset_user_input() {
     user_translate_x = 0;
     user_translate_y = 0;
     user_rotate = 0;
-
     model_matrix = mat4();
-    requestAnimationFrame(render);
 }
 
 function point_size_uniform() {
@@ -264,12 +260,12 @@ function camera_uniform() {
 
 function model_matrix_uniform() {
     model_matrix = mat4();
-
     //TRS
 
     //translate to origin (x, y)
     let current_x = user_translate_x + (svg_mid_x * image_scale_x);
     let current_y = user_translate_y + (svg_mid_y * image_scale_y);
+    console.log("C:" + current_x + "," + current_y);
 
     let translate_matrix = translate(current_x, current_y, 0);
     model_matrix = mult(model_matrix, translate_matrix);
@@ -296,6 +292,7 @@ function render() {
     //position
     vertex_buffer();
     position_attribute();
+    camera_uniform();
 
     //color
     color_buffer();
