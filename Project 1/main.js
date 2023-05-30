@@ -127,7 +127,7 @@ function main() {
             let file_view_box = xmlGetViewbox(xml_doc, 400);
             let lines = xmlGetLines(xml_doc, 0x000000);
 
-            console.log("~~~~~~~~~~~~~~~~~~~~~~~~~");
+            console.clear();
             console.log("ViewBox: " + file_view_box);
             points = lines[0];
             colors = lines[1];
@@ -190,7 +190,6 @@ function reset_user_input() {
 
     model_matrix = mat4();
     requestAnimationFrame(render);
-    console.clear();
 }
 
 function point_size_uniform() {
@@ -238,6 +237,11 @@ function camera_uniform() {
 
 function model_matrix_uniform() {
     model_matrix = mat4();
+
+    //translate to origin
+    let origin_x = 0;
+    let origin_y = 0;
+    model_matrix = translate(origin_x, origin_y, 0);
 
     //srt
     let scale_matrix = scalem(image_scale_x * user_scale, image_scale_y * user_scale, 1.0);
