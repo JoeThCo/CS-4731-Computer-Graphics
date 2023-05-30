@@ -19,8 +19,14 @@ let user_rotate = 0;
 let is_shift_pressed_down = false;
 let is_dragging_mouse = false;
 
+//mouse drag
+let previous_x, previous_y = 0;
+let delta_x, delta_y = 0;
+
+let aspect_ratio = 0;
+
 const ROTATE_CHANGE = 5;
-const SCALE_CHANGE = .075;
+const SCALE_CHANGE = .1;
 
 const MIN_SCALE = .1
 const MAX_SCALE = 10;
@@ -101,6 +107,8 @@ function main() {
     //mouse down
     canvas.addEventListener("mousedown", function (event) {
         is_dragging_mouse = true;
+        previous_x = event.clientX;
+        previous_y = event.clientY;
     })
 
     //mouse move
@@ -112,6 +120,8 @@ function main() {
 
     canvas.addEventListener("mouseup", function (event) {
         is_dragging_mouse = false;
+        delta_x = 0;
+        delta_y = 0;
     })
 
     function on_file_upload(event) {
@@ -138,7 +148,7 @@ function main() {
             height = file_view_box[3];
 
             //Set up the viewport with correct aspect ratio
-            let aspect_ratio = width / height;
+            aspect_ratio = width / height;
             console.log("Aspect Ratio: " + aspect_ratio);
 
             let projection_matrix = ortho(-1, 1, -1, 1, -1, 1);
@@ -166,7 +176,25 @@ function main() {
 }
 
 function on_mouse_drag(event) {
-    //translate code goes here
+    let current_x = event.clientX;
+    let current_y = event.clientY;
+
+    //get the delta
+    delta_x = current_x - previous_x;
+    delta_y = current_y - previous_y;
+
+    //scale the delta
+    delta_x *= 1 / CANVAS_SIZE * width * aspect_ratio;
+    delta_y *= 1 / CANVAS_SIZE * height * aspect_ratio;
+
+    //apply the delta
+    user_translate_x += delta_x;
+    user_translate_y += delta_y;
+
+    //set previous position
+    previous_x = current_x;
+    previous_y = current_y;
+
     requestAnimationFrame(render);
 }
 
@@ -237,12 +265,11 @@ function camera_uniform() {
 function model_matrix_uniform() {
     model_matrix = mat4();
 
-    //translate to origin
-    //(-x, y)
-    let current_x = 0;
-    let current_y = 0;
-    console.log(current_x + " " + current_y);
-    model_matrix = translate(-current_x, -current_y, 0);
+    //translate to origin (x, y)
+    let current_x = user_translate_x - svg_mid_x;
+    let current_y = user_translate_y - svg_mid_y;
+    console.log(current_x + "," + current_y);
+    model_matrix = translate(0, 0, 0);
 
     //srt
     let scale_matrix = scalem(image_scale_x * user_scale, image_scale_y * user_scale, 1.0);
@@ -251,8 +278,7 @@ function model_matrix_uniform() {
     let rotation_matrix = rotateZ(180 + user_rotate);
     model_matrix = mult(model_matrix, rotation_matrix);
 
-    //let translate_matrix = translate(-svg_mid_x + user_translate_x, -svg_mid_y + user_translate_y, 0);
-    let translate_matrix = translate(0, 0, 0);
+    let translate_matrix = translate(current_x, current_y, 0);
     model_matrix = mult(model_matrix, translate_matrix);
 
     let modelMatrix = gl.getUniformLocation(program, "u_model_matrix");
