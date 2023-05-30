@@ -6,6 +6,7 @@ let points = [];
 let colors = [];
 
 let model_matrix;
+let width, height = 0;
 
 //image info
 let image_scale_x = 1, image_scale_y = 1;
@@ -17,8 +18,6 @@ let user_translate_x = 0, user_translate_y = 0;
 let user_rotate = 0;
 let is_shift_pressed_down = false;
 let is_dragging_mouse = false;
-let mouse_start_x = 0, mouse_start_y = 0;
-let drag_x = 0, drag_y = 0;
 
 const ROTATE_CHANGE = 5;
 const SCALE_CHANGE = .075;
@@ -135,8 +134,8 @@ function main() {
             //numbers
             let left = file_view_box[0];
             let bot = file_view_box[1];
-            let width = file_view_box[2];
-            let height = file_view_box[3];
+            width = file_view_box[2];
+            height = file_view_box[3];
 
             //Set up the viewport with correct aspect ratio
             let aspect_ratio = width / height;
@@ -239,9 +238,11 @@ function model_matrix_uniform() {
     model_matrix = mat4();
 
     //translate to origin
-    let origin_x = 0;
-    let origin_y = 0;
-    model_matrix = translate(origin_x, origin_y, 0);
+    //(-x, y)
+    let current_x = 0;
+    let current_y = 0;
+    console.log(current_x + " " + current_y);
+    model_matrix = translate(-current_x, -current_y, 0);
 
     //srt
     let scale_matrix = scalem(image_scale_x * user_scale, image_scale_y * user_scale, 1.0);
@@ -250,7 +251,8 @@ function model_matrix_uniform() {
     let rotation_matrix = rotateZ(180 + user_rotate);
     model_matrix = mult(model_matrix, rotation_matrix);
 
-    let translate_matrix = translate(-svg_mid_x + user_translate_x, -svg_mid_y + user_translate_y, 0);
+    //let translate_matrix = translate(-svg_mid_x + user_translate_x, -svg_mid_y + user_translate_y, 0);
+    let translate_matrix = translate(0, 0, 0);
     model_matrix = mult(model_matrix, translate_matrix);
 
     let modelMatrix = gl.getUniformLocation(program, "u_model_matrix");
