@@ -20,8 +20,8 @@ let is_dragging_mouse = false;
 let mouse_start_x = 0, mouse_start_y = 0;
 let drag_x = 0, drag_y = 0;
 
-const ROTATE_CHANGE = 2.5;
-const SCALE_CHANGE = .05;
+const ROTATE_CHANGE = 5;
+const SCALE_CHANGE = .075;
 
 const MIN_SCALE = .1
 const MAX_SCALE = 10;
