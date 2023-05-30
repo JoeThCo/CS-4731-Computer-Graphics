@@ -8,18 +8,17 @@ let colors = [];
 let model_matrix;
 
 //image info
-let image_scale_x = 1;
-let image_scale_y = 1;
-let image_translate_x = 0;
-let image_translate_y = 0;
+let image_scale_x = 1, image_scale_y = 1;
+let svg_mid_x = 0, svg_mid_y = 0;
 
 //user input info
 let user_scale = 1;
-let user_translate_x = 0;
-let user_translate_y = 0;
+let user_translate_x = 0, user_translate_y = 0;
 let user_rotate = 0;
 let is_shift_pressed_down = false;
 let is_dragging_mouse = false;
+let mouse_start_x = 0, mouse_start_y = 0;
+let drag_x = 0, drag_y = 0;
 
 const ROTATE_CHANGE = 2.5;
 const SCALE_CHANGE = .05;
@@ -103,8 +102,6 @@ function main() {
     //mouse down
     canvas.addEventListener("mousedown", function (event) {
         is_dragging_mouse = true;
-        mouse_x = event.clientX;
-        mouse_y = event.clientY;
     })
 
     //mouse move
@@ -155,9 +152,9 @@ function main() {
             image_scale_y = 1 / (height * .5);
             console.log("Scale:" + image_scale_x + "," + image_scale_y);
 
-            image_translate_x = (width * .5) + left;
-            image_translate_y = (height * .5) + bot;
-            console.log("Translate:" + image_translate_x + "," + image_translate_y);
+            svg_mid_x = (width * .5) + left;
+            svg_mid_y = (height * .5) + bot;
+            console.log("Translate:" + svg_mid_x + "," + svg_mid_y);
 
             camera_uniform();
             model_matrix_uniform();
@@ -170,6 +167,7 @@ function main() {
 }
 
 function on_mouse_drag(event) {
+
 
     //translate code goes here
     requestAnimationFrame(render);
@@ -257,7 +255,7 @@ function model_matrix_uniform() {
     let rotation_matrix = rotateZ(180 + user_rotate);
     model_matrix = mult(model_matrix, rotation_matrix);
 
-    let translate_matrix = translate(-image_translate_x + user_translate_x, -image_translate_y + user_translate_y, 0);
+    let translate_matrix = translate(-svg_mid_x + user_translate_x, -svg_mid_y + user_translate_y, 0);
     model_matrix = mult(model_matrix, translate_matrix);
 
     let modelMatrix = gl.getUniformLocation(program, "u_model_matrix");
