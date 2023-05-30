@@ -20,10 +20,7 @@ let user_translate_y = 0;
 let user_rotate = 0;
 let is_shift_pressed_down = false;
 let is_dragging_mouse = false;
-let last_mouse_x = 0;
-let last_mouse_y = 0;
 
-const TRANSLATE_CHANGE = .25;
 const ROTATE_CHANGE = 2.5;
 const SCALE_CHANGE = .05;
 
@@ -106,28 +103,20 @@ function main() {
     //mouse down
     canvas.addEventListener("mousedown", function (event) {
         is_dragging_mouse = true;
-        last_mouse_x = event.clientX;
-        last_mouse_y = event.clientY;
+        mouse_x = event.clientX;
+        mouse_y = event.clientY;
     })
 
     //mouse move
     canvas.addEventListener("mousemove", function (event) {
-        let delta_x = (event.clientX - last_mouse_x) * TRANSLATE_CHANGE;
-        let delta_y = (event.clientY - last_mouse_y) * TRANSLATE_CHANGE;
-
         if (is_dragging_mouse) {
-            on_mouse_drag(delta_x, delta_y);
+            on_mouse_drag(event);
         }
-
-        last_mouse_x = event.clientX;
-        last_mouse_y = event.clientY;
     })
 
     canvas.addEventListener("mouseup", function (event) {
         is_dragging_mouse = false;
     })
-
-    render();
 
     function on_file_upload(event) {
         let reader = new FileReader();
@@ -171,20 +160,19 @@ function main() {
             console.log("Translate:" + image_translate_x + "," + image_translate_y);
 
             camera_uniform();
+            model_matrix_uniform();
 
             render();
-            model_matrix_uniform();
         };
 
         reader.readAsText(event.target.files[0]);
     }
 }
 
-function on_mouse_drag(delta_x, delta_y) {
-    user_translate_x += delta_x;
-    user_translate_y += delta_y;
+function on_mouse_drag(event) {
 
     //translate code goes here
+    requestAnimationFrame(render);
 }
 
 function on_scale(change) {
@@ -192,14 +180,12 @@ function on_scale(change) {
 
     user_scale = clamp(user_scale, MIN_SCALE, MAX_SCALE);
     //scaling code goes here
+    requestAnimationFrame(render);
 }
 
 function on_rotate(change) {
-
     //rotate code codes here
-    //move to origin
     user_rotate += change;
-
     requestAnimationFrame(render);
 }
 
@@ -209,7 +195,8 @@ function reset_user_input() {
     user_translate_y = 0;
     user_rotate = 0;
 
-    render();
+    model_matrix = mat4();
+    requestAnimationFrame(render);
 }
 
 function point_size_uniform() {
@@ -255,6 +242,11 @@ function camera_uniform() {
     gl.uniformMatrix4fv(view_matrix, false, flatten(camera_matrix));
 }
 
+function model_matrix_uniform(matrix_input) {
+    let modelMatrix = gl.getUniformLocation(program, "u_model_matrix");
+    gl.uniformMatrix4fv(modelMatrix, false, flatten(matrix_input));
+}
+
 function model_matrix_uniform() {
     model_matrix = mat4();
 
@@ -276,7 +268,6 @@ function drawing() {
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.LINES, 0, points.length);
-    requestAnimationFrame(render);
 }
 
 function render() {
