@@ -167,22 +167,17 @@ function main() {
 }
 
 function on_mouse_drag(event) {
-
-
     //translate code goes here
     requestAnimationFrame(render);
 }
 
 function on_scale(change) {
     user_scale += change;
-
     user_scale = clamp(user_scale, MIN_SCALE, MAX_SCALE);
-    //scaling code goes here
     requestAnimationFrame(render);
 }
 
 function on_rotate(change) {
-    //rotate code codes here
     user_rotate += change;
     requestAnimationFrame(render);
 }
@@ -195,6 +190,7 @@ function reset_user_input() {
 
     model_matrix = mat4();
     requestAnimationFrame(render);
+    console.clear();
 }
 
 function point_size_uniform() {
@@ -238,11 +234,6 @@ function camera_uniform() {
     let camera_matrix = lookAt(camera_position, target_position, up_vector);
     let view_matrix = gl.getUniformLocation(program, "u_view_matrix");
     gl.uniformMatrix4fv(view_matrix, false, flatten(camera_matrix));
-}
-
-function model_matrix_uniform(matrix_input) {
-    let modelMatrix = gl.getUniformLocation(program, "u_model_matrix");
-    gl.uniformMatrix4fv(modelMatrix, false, flatten(matrix_input));
 }
 
 function model_matrix_uniform() {
