@@ -257,13 +257,8 @@ function camera_uniform() {
 }
 
 function transformation_matrix_uniform() {
-    //translate to origin (x, y)
-    let current_x = user_translate_x + (svg_mid_x * image_scale_x);
-    let current_y = user_translate_y + (svg_mid_y * image_scale_y);
-    console.log("C:" + current_x + "," + current_y);
-
     //translate
-    let translate_matrix = translate(current_x, current_y, 0);
+    let translate_matrix = translate(0, 0, 0);
     let translate_location = gl.getUniformLocation(program, "u_translate")
     gl.uniformMatrix4fv(translate_location, false, flatten(translate_matrix));
 
