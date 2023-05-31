@@ -5,7 +5,6 @@ let program;
 let points = [];
 let colors = [];
 
-let model_matrix;
 let width, height = 0;
 
 //image info
@@ -212,7 +211,6 @@ function reset_user_input() {
     user_translate_x = 0;
     user_translate_y = 0;
     user_rotate = 0;
-    model_matrix = mat4();
 }
 
 function point_size_uniform() {
@@ -258,28 +256,26 @@ function camera_uniform() {
     gl.uniformMatrix4fv(view_matrix, false, flatten(camera_matrix));
 }
 
-function model_matrix_uniform() {
-    model_matrix = mat4();
-    //TRS
-
+function transformation_matrix_uniform() {
     //translate to origin (x, y)
     let current_x = user_translate_x + (svg_mid_x * image_scale_x);
     let current_y = user_translate_y + (svg_mid_y * image_scale_y);
     console.log("C:" + current_x + "," + current_y);
 
+    //translate
     let translate_matrix = translate(current_x, current_y, 0);
-    model_matrix = mult(model_matrix, translate_matrix);
+    let translate_location = gl.getUniformLocation(program, "u_translate")
+    gl.uniformMatrix4fv(translate_location, false, flatten(translate_matrix));
 
-    let rotation_matrix = rotateZ(180 + user_rotate);
-    model_matrix = mult(model_matrix, rotation_matrix);
+    //rotate
+    let rotate_matrix = rotateZ(180 + user_rotate);
+    let rotate_location = gl.getUniformLocation(program, "u_rotation");
+    gl.uniformMatrix4fv(rotate_location, false, flatten(rotate_matrix));
 
+    //scale
     let scale_matrix = scalem(image_scale_x * user_scale, image_scale_y * user_scale, 1.0);
-    model_matrix = mult(model_matrix, scale_matrix);
-
-    //move from origin back to input coords
-
-    let modelMatrix = gl.getUniformLocation(program, "u_model_matrix");
-    gl.uniformMatrix4fv(modelMatrix, false, flatten(model_matrix));
+    let scale_location = gl.getUniformLocation(program, "u_scale");
+    gl.uniformMatrix4fv(scale_location, false, flatten(scale_matrix));
 }
 
 function drawing() {
@@ -300,7 +296,7 @@ function render() {
 
     //uniforms
     point_size_uniform();
-    model_matrix_uniform();
+    transformation_matrix_uniform();
 
     drawing();
 }
