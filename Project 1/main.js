@@ -6,6 +6,7 @@ let points = [];
 let colors = [];
 
 let width, height = 0;
+let model_matrix;
 
 //image info
 let svg_scale_x = 1, svg_scale_y = 1;
@@ -141,6 +142,8 @@ function main() {
             points = lines[0];
             colors = lines[1];
 
+            console.log(points);
+
             //numbers
             let left = file_view_box[0];
             let bot = file_view_box[1];
@@ -211,6 +214,8 @@ function reset_user_input() {
     user_translate_x = 0;
     user_translate_y = 0;
     user_rotate = 0;
+
+    model_matrix = mat4();
 }
 
 function point_size_uniform() {
@@ -257,20 +262,25 @@ function camera_uniform() {
 }
 
 function transformation_matrix_uniform() {
-    let model_matrix;
 
     //center point
-    let current_x = user_translate_x;
-    let current_y = user_translate_y;
+    let to_origin_x = user_translate_x - 1;
+    let to_origin_y = user_translate_y - 1;
 
-    let translate_to_origin = translate(-current_x, -current_y, 0);
+    //move to the origin
+    let translate_to_origin = translate(-to_origin_x, -to_origin_y, 0);
+    model_matrix = mult(model_matrix, translate_to_origin);
+
+    //rotate
     let rotation_matrix = rotateZ(180 + user_rotate);
     model_matrix = mult(translate_to_origin, rotation_matrix);
 
+    //scale
     let scale_matrix = scalem(svg_scale_x * user_scale, svg_scale_y * user_scale, 1.0);
     model_matrix = mult(model_matrix, scale_matrix);
 
-    let translate_to_current = translate(current_x, current_y, 0.0);
+    //move back
+    let translate_to_current = translate(to_origin_x, to_origin_y, 0.0);
     model_matrix = mult(model_matrix, translate_to_current);
 
     let model_matrix_location = gl.getUniformLocation(program, "u_model_matrix");
