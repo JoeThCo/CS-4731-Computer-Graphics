@@ -8,7 +8,7 @@ let colors = [];
 let width, height = 0;
 
 //image info
-let image_scale_x = 1, image_scale_y = 1;
+let svg_scale_x = 1, svg_scale_y = 1;
 let svg_mid_x = 0, svg_mid_y = 0;
 
 //user input info
@@ -157,13 +157,13 @@ function main() {
 
             gl.viewport(0, 0, CANVAS_SIZE, CANVAS_SIZE / aspect_ratio);
 
-            image_scale_x = 1 / (width * .5);
-            image_scale_y = 1 / (height * .5);
-            console.log("Scale:" + image_scale_x + "," + image_scale_y);
+            svg_scale_x = 1 / (width * .5);
+            svg_scale_y = 1 / (height * .5);
+            console.log("SVG Scale:" + svg_scale_x + "," + svg_scale_y);
 
             svg_mid_x = (width * .5) + left;
             svg_mid_y = (height * .5) + bot;
-            console.log("Translate:" + svg_mid_x + "," + svg_mid_y);
+            console.log("SVG Mid:" + svg_mid_x + "," + svg_mid_y);
 
             render();
         };
@@ -258,7 +258,7 @@ function camera_uniform() {
 
 function transformation_matrix_uniform() {
     //translate
-    let translate_matrix = translate(0, 0, 0);
+    let translate_matrix = translate(user_translate_x, user_translate_y, 0);
     let translate_location = gl.getUniformLocation(program, "u_translate")
     gl.uniformMatrix4fv(translate_location, false, flatten(translate_matrix));
 
@@ -268,7 +268,7 @@ function transformation_matrix_uniform() {
     gl.uniformMatrix4fv(rotate_location, false, flatten(rotate_matrix));
 
     //scale
-    let scale_matrix = scalem(image_scale_x * user_scale, image_scale_y * user_scale, 1.0);
+    let scale_matrix = scalem(svg_scale_x * user_scale, svg_scale_y * user_scale, 1.0);
     let scale_location = gl.getUniformLocation(program, "u_scale");
     gl.uniformMatrix4fv(scale_location, false, flatten(scale_matrix));
 }
