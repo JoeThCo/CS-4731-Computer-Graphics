@@ -185,8 +185,8 @@ function on_mouse_drag(event) {
     delta_y *= 1 / (CANVAS_SIZE * aspect_ratio) * height;
 
     //apply the delta
-    user_translate_x -= delta_x;
-    user_translate_y -= delta_y;
+    user_translate_x += delta_x;
+    user_translate_y += delta_y;
 
     //set previous position
     previous_x = current_x;
@@ -215,7 +215,7 @@ function reset_user_input() {
 
 function point_size_uniform() {
     //point size
-    let vertex_point_size = gl.getUniformLocation(program, "u_vPoint_size");
+    let vertex_point_size = gl.getUniformLocation(program, "u_point_size");
     gl.uniform1f(vertex_point_size, POINT_SIZE);
 }
 
@@ -257,20 +257,24 @@ function camera_uniform() {
 }
 
 function transformation_matrix_uniform() {
-    //translate
-    let translate_matrix = translate(user_translate_x, user_translate_y, 0);
-    let translate_location = gl.getUniformLocation(program, "u_translate")
-    gl.uniformMatrix4fv(translate_location, false, flatten(translate_matrix));
+    let model_matrix;
 
-    //rotate
-    let rotate_matrix = rotateZ(180 + user_rotate);
-    let rotate_location = gl.getUniformLocation(program, "u_rotation");
-    gl.uniformMatrix4fv(rotate_location, false, flatten(rotate_matrix));
+    //center point
+    let current_x = user_translate_x;
+    let current_y = user_translate_y;
 
-    //scale
+    let translate_to_origin = translate(-current_x, -current_y, 0);
+    let rotation_matrix = rotateZ(180 + user_rotate);
+    model_matrix = mult(translate_to_origin, rotation_matrix);
+
     let scale_matrix = scalem(svg_scale_x * user_scale, svg_scale_y * user_scale, 1.0);
-    let scale_location = gl.getUniformLocation(program, "u_scale");
-    gl.uniformMatrix4fv(scale_location, false, flatten(scale_matrix));
+    model_matrix = mult(model_matrix, scale_matrix);
+
+    let translate_to_current = translate(current_x, current_y, 0.0);
+    model_matrix = mult(model_matrix, translate_to_current);
+
+    let model_matrix_location = gl.getUniformLocation(program, "u_model_matrix");
+    gl.uniformMatrix4fv(model_matrix_location, false, flatten(model_matrix));
 }
 
 function drawing() {
