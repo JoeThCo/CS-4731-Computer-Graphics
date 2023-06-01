@@ -262,29 +262,34 @@ function camera_uniform() {
 }
 
 function transformation_matrix_uniform() {
+    //translate to origin (x, y)
+    let current_x = user_translate_x + (svg_mid_x * svg_scale_x);
+    let current_y = user_translate_y + (svg_mid_y * svg_scale_y);
+    console.log("C:" + current_x + "," + current_y);
 
-    //center point
-    let to_origin_x = user_translate_x - 1;
-    let to_origin_y = user_translate_y - 1;
+    //translate
+    let translate_matrix = translate(-current_x, -current_y, 0);
+    model_matrix = mult(model_matrix, translate_matrix);
+    let translate_location = gl.getUniformLocation(program, "u_translate")
+    gl.uniformMatrix4fv(translate_location, false, flatten(translate_matrix));
 
-    //move to the origin
-    let translate_to_origin = translate(-to_origin_x, -to_origin_y, 0);
-    model_matrix = mult(model_matrix, translate_to_origin);
-
-    //rotate
     let rotation_matrix = rotateZ(180 + user_rotate);
-    model_matrix = mult(translate_to_origin, rotation_matrix);
+    model_matrix = mult(model_matrix, rotation_matrix);
+    //rotate
+    let rotate_matrix = rotateZ(180 + user_rotate);
+    let rotate_location = gl.getUniformLocation(program, "u_rotation");
+    gl.uniformMatrix4fv(rotate_location, false, flatten(rotate_matrix));
 
     //scale
     let scale_matrix = scalem(svg_scale_x * user_scale, svg_scale_y * user_scale, 1.0);
     model_matrix = mult(model_matrix, scale_matrix);
 
-    //move back
-    let translate_to_current = translate(to_origin_x, to_origin_y, 0.0);
-    model_matrix = mult(model_matrix, translate_to_current);
+    //move from origin back to input coords
 
-    let model_matrix_location = gl.getUniformLocation(program, "u_model_matrix");
-    gl.uniformMatrix4fv(model_matrix_location, false, flatten(model_matrix));
+    let modelMatrix = gl.getUniformLocation(program, "u_model_matrix");
+    gl.uniformMatrix4fv(modelMatrix, false, flatten(model_matrix));
+    let scale_location = gl.getUniformLocation(program, "u_scale");
+    gl.uniformMatrix4fv(scale_location, false, flatten(scale_matrix));
 }
 
 function drawing() {
