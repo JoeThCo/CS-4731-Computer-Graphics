@@ -2,6 +2,8 @@ let canvas;
 let gl;
 
 let numTimesToSubdivide = 3;
+const MIN_SUBDIVISIONS = 1;
+const MAX_SUBDIVISIONS = 5;
 
 let index = 0;
 
@@ -9,21 +11,13 @@ let pointsArray = [];
 let normalsArray = [];
 let flatShadingArray = [];
 
-let near = -10;
-let far = 10;
-
-let left = -3.0;
-let right = 3.0;
-let ytop = 3.0;
-let bottom = -3.0;
-
 let va = vec4(0.0, 0.0, -1.0, 1);
 let vb = vec4(0.0, 0.942809, 0.333333, 1);
 let vc = vec4(-0.816497, -0.471405, 0.333333, 1);
 let vd = vec4(0.816497, -0.471405, 0.333333, 1);
 
-let lightPosition = vec4(1.0, 1.0, 1.0, 0.0);
-let lightAmbient = vec4(0.5, 0.5, 0.5, 0.5);
+let lightPosition = vec4(10.0, 10.0, 0.0, 0.0);
+let lightAmbient = vec4(1.0, 1.0, 1.0, 0.5);
 let lightDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
 let lightSpecular = vec4(0.5, 0.5, 0.5, 1.0);
 
@@ -38,6 +32,10 @@ let modelViewMatrixLoc, projectionMatrixLoc;
 let eye;
 let at = vec3(0.0, 0.0, 0.0);
 let up = vec3(0.0, 1.0, 0.0);
+
+function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+}
 
 function triangle(a, b, c) {
     pointsArray.push(a);
@@ -55,7 +53,6 @@ function triangle(a, b, c) {
 
     index += 3;
 }
-
 
 function divideTriangle(a, b, c, count) {
     if (count > 0) {
@@ -79,7 +76,6 @@ function divideTriangle(a, b, c, count) {
     }
 }
 
-
 function tetrahedron(a, b, c, d, n) {
     divideTriangle(a, b, c, n);
     divideTriangle(d, c, b, n);
@@ -87,18 +83,23 @@ function tetrahedron(a, b, c, d, n) {
     divideTriangle(a, c, d, n);
 }
 
-window.onload = function init() {
+function init() {
 
-    canvas = document.getElementById("gl-canvas");
+    pointsArray = [];
+    normalsArray = [];
+    flatShadingArray = [];
+
+    canvas = document.getElementById("canvas");
 
     gl = WebGLUtils.setupWebGL(canvas);
     if (!gl) {
         alert("WebGL isn't available");
     }
 
-    gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    window.addEventListener('keydown', on_key_down);
 
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
 
     //
@@ -141,14 +142,41 @@ window.onload = function init() {
     render();
 }
 
-let time = 0;
+function on_key_down(event) {
+    const key = event.key;
+    if (key === 'q') {
+        subdivision_down();
+    } else if (key === 'e') {
+        subdivision_up();
+    }
+}
+
+function subdivision_down() {
+    numTimesToSubdivide--;
+    clamp_subdivision();
+
+    init();
+}
+
+function subdivision_up() {
+    numTimesToSubdivide++;
+    clamp_subdivision();
+
+    init();
+}
+
+function clamp_subdivision() {
+    numTimesToSubdivide = clamp(numTimesToSubdivide, MIN_SUBDIVISIONS, MAX_SUBDIVISIONS);
+}
 
 function render() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    eye = vec3(0, 0, 1.5);
+    eye = vec3(0.0, 0.0, 3.0);
     modelViewMatrix = lookAt(eye, at, up);
-    projectionMatrix = ortho(left, right, bottom, ytop, near, far);
+
+    // projectionMatrix = ortho(left, right, bottom, ytop, near, far);
+    projectionMatrix = perspective(90, 1, -1, 1);
 
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix));
     gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix));
