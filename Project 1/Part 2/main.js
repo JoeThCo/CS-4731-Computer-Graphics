@@ -11,7 +11,6 @@ let line_control_points = []
 let new_points = []
 
 let position_attribute_location;
-
 let index = 0;
 
 let pointsArray = [];
@@ -205,11 +204,10 @@ function render_sphere() {
 }
 
 function make_chalkin() {
-    let size = 2;
+    let size = 4;
 
-    line_control_points.push(vec4(-size * 2, 0.0, 0.0, 1.0));
-    line_control_points.push(vec4(0.0, 0.0, 0.0, 1.0));
-    line_control_points.push(vec4(size * 2, 0.0, 0.0, 1.0));
+    //points go here
+    //line_control_points.push(vec4(size, 0.0, 0.0, 1.0));
 
     let linePoints = chaikin(line_control_points, LINE_SUBDIVISIONS);
 
