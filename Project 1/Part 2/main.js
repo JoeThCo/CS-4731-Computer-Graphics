@@ -1,9 +1,14 @@
 let canvas;
 let gl;
+let program;
 
 let numTimesToSubdivide = 3;
 const MIN_SUBDIVISIONS = 1;
 const MAX_SUBDIVISIONS = 5;
+
+const LINE_SUBDIVISIONS = 6;
+let line_control_points = []
+let new_points = []
 
 let index = 0;
 
@@ -61,7 +66,7 @@ function divideTriangle(a, b, c, count) {
         let ac = mix(a, c, 0.5);
         let bc = mix(b, c, 0.5);
 
-        //normlize all he new points
+        //normlize all the new points
         ab = normalize(ab, true);
         ac = normalize(ac, true);
         bc = normalize(bc, true);
@@ -83,11 +88,42 @@ function tetrahedron(a, b, c, d, n) {
     divideTriangle(a, c, d, n);
 }
 
+function chaikin(vertices, iterations) {
+    //no iterations return array
+    if (iterations === 0) {
+        return vertices;
+    }
+
+    let newVertices = [];
+
+    for (let i = 0; i < vertices.length - 1; i++) {
+
+        //get vertices
+        let first_vertex = vertices[i];
+        let second_vertex = vertices[i + 1];
+
+        //make two new points
+        //one that is 25% between first and second
+        //one that is 75% between first and second
+        let point_one = mix(first_vertex, second_vertex, 0.25);
+        let point_two = mix(first_vertex, second_vertex, 0.75);
+
+        //add the new points
+        newVertices.push(point_one, point_two);
+    }
+
+    //repeat until no more iterations
+    return chaikin(newVertices, iterations - 1);
+}
+
 function init() {
 
     pointsArray = [];
     normalsArray = [];
     flatShadingArray = [];
+
+    line_control_points = [];
+    new_points = [];
 
     canvas = document.getElementById("canvas");
 
@@ -105,8 +141,16 @@ function init() {
     //
     //  Load shaders and initialize attribute buffers
     //
-    let program = initShaders(gl, "vertex-shader", "fragment-shader");
+    program = initShaders(gl, "vertex-shader", "fragment-shader");
     gl.useProgram(program);
+
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    make_sphere();
+    render_sphere();
+}
+
+function make_sphere() {
 
     tetrahedron(va, vb, vc, vd, numTimesToSubdivide);
 
@@ -139,7 +183,29 @@ function init() {
     gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"), flatten(lightPosition));
     gl.uniform1f(gl.getUniformLocation(program, "shininess"), materialShininess);
 
-    render();
+}
+
+function render_sphere() {
+    eye = vec3(0.0, 0.0, 3.0);
+    modelViewMatrix = lookAt(eye, at, up);
+
+    // projectionMatrix = ortho(left, right, bottom, ytop, near, far);
+    projectionMatrix = perspective(90, 1, -1, 1);
+
+    gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix));
+    gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix));
+
+    for (let i = 0; i < index; i += 3) {
+        gl.drawArrays(gl.TRIANGLES, i, 3);
+    }
+}
+
+function make_chalkin() {
+
+}
+
+function render_chalkin() {
+
 }
 
 function on_key_down(event) {
@@ -169,19 +235,4 @@ function clamp_subdivision() {
     numTimesToSubdivide = clamp(numTimesToSubdivide, MIN_SUBDIVISIONS, MAX_SUBDIVISIONS);
 }
 
-function render() {
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    eye = vec3(0.0, 0.0, 3.0);
-    modelViewMatrix = lookAt(eye, at, up);
-
-    // projectionMatrix = ortho(left, right, bottom, ytop, near, far);
-    projectionMatrix = perspective(90, 1, -1, 1);
-
-    gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix));
-    gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix));
-
-    for (let i = 0; i < index; i += 3) {
-        gl.drawArrays(gl.TRIANGLES, i, 3);
-    }
-}

@@ -37,18 +37,18 @@
 	    fColor.a = 1.0;
     }
 
+
     </script>
 
     <script id="fragment-shader" type="x-shader/x-fragment">
-
     precision mediump float;
-
     varying vec4 fColor;
 
     void main()
     {
         gl_FragColor = fColor;
     }
+
 
     </script>
 
@@ -60,9 +60,11 @@
 </head>
 
 <body onload="init()">
-<h1 id='htitle'>Joe Colley's Path Follower</h1>
-<canvas id="canvas" width="400" height="400" style="border: 1px solid black;">
-    Epic fail!
-</canvas>
+<div style="text-align: center">
+    <h1 id='htitle'>Joe Colley's Path Follower</h1>
+    <canvas id="canvas" width="400" height="400" style="border: 1px solid black;">
+        Epic fail!
+    </canvas>
+</div>
 </body>
 </html>
