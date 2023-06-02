@@ -187,7 +187,6 @@ function make_sphere() {
     gl.uniform4fv(gl.getUniformLocation(program, "u_ambient_product"), flatten(ambientProduct));
     gl.uniform4fv(gl.getUniformLocation(program, "u_lightPosition"), flatten(lightPosition));
     gl.uniform1f(gl.getUniformLocation(program, "u_shininess"), materialShininess);
-
 }
 
 function render_sphere() {
@@ -206,8 +205,11 @@ function render_sphere() {
 }
 
 function make_chalkin() {
+    let size = 2;
 
-    line_control_points.push(vec4(1.0, 1.0, 1.0, 1.0));
+    line_control_points.push(vec4(-size * 2, 0.0, 0.0, 1.0));
+    line_control_points.push(vec4(0.0, 0.0, 0.0, 1.0));
+    line_control_points.push(vec4(size * 2, 0.0, 0.0, 1.0));
 
     let linePoints = chaikin(line_control_points, LINE_SUBDIVISIONS);
 
@@ -215,11 +217,10 @@ function make_chalkin() {
     gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(linePoints), gl.STATIC_DRAW);
 
-    let vPosition = gl.getAttribLocation(program, "a_Position");
-    gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(vPosition);
+    gl.vertexAttribPointer(position_attribute_location, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(position_attribute_location);
 
-    gl.drawArrays(gl.LINE_LOOP, 0, linePoints.length);
+    gl.drawArrays(gl.LINES, 0, linePoints.length);
 }
 
 function render_chalkin() {
