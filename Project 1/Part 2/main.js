@@ -10,6 +10,8 @@ const LINE_SUBDIVISIONS = 6;
 let line_control_points = []
 let new_points = []
 
+let position_attribute_location;
+
 let index = 0;
 
 let pointsArray = [];
@@ -148,6 +150,9 @@ function init() {
 
     make_sphere();
     render_sphere();
+
+    make_chalkin();
+    render_chalkin();
 }
 
 function make_sphere() {
@@ -158,30 +163,30 @@ function make_sphere() {
     gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW);
 
-    let vPosition = gl.getAttribLocation(program, "vPosition");
-    gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(vPosition);
+    position_attribute_location = gl.getAttribLocation(program, "a_Position");
+    gl.vertexAttribPointer(position_attribute_location, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(position_attribute_location);
 
     let vNormal = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vNormal);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(normalsArray), gl.STATIC_DRAW);
 
-    let vNormalPosition = gl.getAttribLocation(program, "vNormal");
+    let vNormalPosition = gl.getAttribLocation(program, "a_Normal");
     gl.vertexAttribPointer(vNormalPosition, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vNormalPosition);
 
-    modelViewMatrixLoc = gl.getUniformLocation(program, "modelViewMatrix");
-    projectionMatrixLoc = gl.getUniformLocation(program, "projectionMatrix");
+    modelViewMatrixLoc = gl.getUniformLocation(program, "u_model_view_matrix");
+    projectionMatrixLoc = gl.getUniformLocation(program, "u_projection_matrix");
 
     let diffuseProduct = mult(lightDiffuse, materialDiffuse);
     let specularProduct = mult(lightSpecular, materialSpecular);
     let ambientProduct = mult(lightAmbient, materialAmbient);
 
-    gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"), flatten(diffuseProduct));
-    gl.uniform4fv(gl.getUniformLocation(program, "specularProduct"), flatten(specularProduct));
-    gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"), flatten(ambientProduct));
-    gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"), flatten(lightPosition));
-    gl.uniform1f(gl.getUniformLocation(program, "shininess"), materialShininess);
+    gl.uniform4fv(gl.getUniformLocation(program, "u_diffuse_product"), flatten(diffuseProduct));
+    gl.uniform4fv(gl.getUniformLocation(program, "u_specular_product"), flatten(specularProduct));
+    gl.uniform4fv(gl.getUniformLocation(program, "u_ambient_product"), flatten(ambientProduct));
+    gl.uniform4fv(gl.getUniformLocation(program, "u_lightPosition"), flatten(lightPosition));
+    gl.uniform1f(gl.getUniformLocation(program, "u_shininess"), materialShininess);
 
 }
 
@@ -202,6 +207,19 @@ function render_sphere() {
 
 function make_chalkin() {
 
+    line_control_points.push(vec4(1.0, 1.0, 1.0, 1.0));
+
+    let linePoints = chaikin(line_control_points, LINE_SUBDIVISIONS);
+
+    let vBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(linePoints), gl.STATIC_DRAW);
+
+    let vPosition = gl.getAttribLocation(program, "a_Position");
+    gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vPosition);
+
+    gl.drawArrays(gl.LINE_LOOP, 0, linePoints.length);
 }
 
 function render_chalkin() {
