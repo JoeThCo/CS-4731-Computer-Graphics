@@ -2,11 +2,17 @@ let canvas;
 let gl;
 let program;
 
-let numTimesToSubdivide = 3;
-const MIN_SUBDIVISIONS = 1;
-const MAX_SUBDIVISIONS = 5;
+const WANT_DEBUG_INFO = false;
 
-const LINE_SUBDIVISIONS = 6;
+let sphere_subdivisions = 2;
+const MIN_SPHERE_SUBDIVISIONS = 1;
+const MAX_SPHERE_SUBDIVISIONS = 5;
+
+let line_subdivisions = 4;
+const MIN_LINE_SUBDIVISIONS = 1;
+const MAX_LINE_SUBDIVISIONS = 7;
+
+let line_points = [];
 let line_control_points = []
 let new_points = []
 
@@ -118,7 +124,6 @@ function chaikin(vertices, iterations) {
 }
 
 function init() {
-
     pointsArray = [];
     normalsArray = [];
     flatShadingArray = [];
@@ -147,16 +152,23 @@ function init() {
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    debug_info(WANT_DEBUG_INFO);
+
     make_sphere();
     render_sphere();
 
-    make_chalkin();
-    render_chalkin();
+    make_chaikin();
+    render_chaikin();
+}
+
+function debug_info(state)
+{
+    if(!state) return;
+    console.log("SD: " + sphere_subdivisions + " | LD: " + line_subdivisions);
 }
 
 function make_sphere() {
-
-    tetrahedron(va, vb, vc, vd, numTimesToSubdivide);
+    tetrahedron(va, vb, vc, vd, sphere_subdivisions);
 
     let vBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
@@ -193,7 +205,7 @@ function render_sphere() {
     modelViewMatrix = lookAt(eye, at, up);
 
     // projectionMatrix = ortho(left, right, bottom, ytop, near, far);
-    projectionMatrix = perspective(90, 1, -1, 1);
+    projectionMatrix = perspective(110, 1, -1, 1);
 
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix));
     gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix));
@@ -203,53 +215,83 @@ function render_sphere() {
     }
 }
 
-function make_chalkin() {
-    let size = 4;
-
+function make_chaikin() {
     //points go here
-    //line_control_points.push(vec4(size, 0.0, 0.0, 1.0));
 
-    let linePoints = chaikin(line_control_points, LINE_SUBDIVISIONS);
+    let size = 5.0;
+
+    //top arc
+    line_control_points.push(vec4(size, 0.0, 0.0, 1.0));
+    line_control_points.push(vec4(0.0, size, 0.0, 1.0));
+    line_control_points.push(vec4(-size, 0.0, 0.0, 1.0));
+
+    //bot arc
+    line_control_points.push(vec4(size, 0.0, 0.0, 1.0));
+    line_control_points.push(vec4(0.0, -size, 0.0, 1.0));
+    line_control_points.push(vec4(-size, 0.0, 0.0, 1.0));
+
+    line_points = chaikin(line_control_points, line_subdivisions);
 
     let vBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(linePoints), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(line_points), gl.STATIC_DRAW);
 
     gl.vertexAttribPointer(position_attribute_location, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(position_attribute_location);
-
-    gl.drawArrays(gl.LINES, 0, linePoints.length);
 }
 
-function render_chalkin() {
-
+function render_chaikin() {
+    gl.drawArrays(gl.LINES, 0, line_points.length);
 }
 
 function on_key_down(event) {
     const key = event.key;
     if (key === 'q') {
-        subdivision_down();
+        sphere_subdivision_down();
     } else if (key === 'e') {
-        subdivision_up();
+        sphere_subdivision_up();
+    } else if (key === 'i') {
+        line_subdivision_up();
+    } else if (key === 'j') {
+        line_subdivision_down();
     }
 }
 
-function subdivision_down() {
-    numTimesToSubdivide--;
-    clamp_subdivision();
+function clamp_line_subdivisions() {
+    return clamp(line_subdivisions, MIN_LINE_SUBDIVISIONS, MAX_LINE_SUBDIVISIONS);
+}
+
+function clamp_sphere_subdivision() {
+    return clamp(sphere_subdivisions, MIN_SPHERE_SUBDIVISIONS, MAX_SPHERE_SUBDIVISIONS);
+}
+
+function sphere_subdivision_down() {
+    sphere_subdivisions--;
+    sphere_subdivisions = clamp_sphere_subdivision();
 
     init();
 }
 
-function subdivision_up() {
-    numTimesToSubdivide++;
-    clamp_subdivision();
+function sphere_subdivision_up() {
+    sphere_subdivisions++;
+    sphere_subdivisions = clamp_sphere_subdivision();
 
     init();
 }
 
-function clamp_subdivision() {
-    numTimesToSubdivide = clamp(numTimesToSubdivide, MIN_SUBDIVISIONS, MAX_SUBDIVISIONS);
+function line_subdivision_up() {
+    line_subdivisions++;
+    line_subdivisions = clamp_line_subdivisions();
+
+    init();
 }
+
+function line_subdivision_down() {
+    line_subdivisions--;
+    line_subdivisions = clamp_line_subdivisions();
+
+    init();
+}
+
 
 
