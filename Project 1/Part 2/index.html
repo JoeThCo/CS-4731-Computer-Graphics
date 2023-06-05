@@ -23,12 +23,12 @@
     {
         //Diffuse
         vec3 pos = (u_model_view_matrix * a_flatShading).xyz;
-        vec3 N = normalize(u_model_view_matrix * a_Normal).xyz;
         vec3 L = normalize(u_lightPosition.xyz - pos);
+        vec3 N = normalize(u_model_view_matrix * a_Normal).xyz;
+        vec3 V =  normalize(-pos);
         vec4 diffuse = u_diffuse_product * dot(L, N);
 
         //Specular
-        vec3 V =  normalize(-pos);
         vec3 R = (2.0 * dot(L, N) * N) - L;
         vec4 specular = u_specular_product * pow(max(dot(V, R), 0.0), u_shininess);
 
@@ -39,8 +39,6 @@
 	    v_Color = diffuse + specular + ambient;
 	    v_Color.a = 1.0;
     }
-
-
     </script>
 
     <script id="fragment-shader" type="x-shader/x-fragment">
@@ -51,10 +49,6 @@
     {
         gl_FragColor = v_Color;
     }
-
-
-
-
     </script>
 
     <script type="text/javascript" src="lib/webgl-utils.js"></script>

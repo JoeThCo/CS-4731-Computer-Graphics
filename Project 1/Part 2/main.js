@@ -28,20 +28,20 @@ let vb = vec4(0.0, 0.942809, 0.333333, 1);
 let vc = vec4(-0.816497, -0.471405, 0.333333, 1);
 let vd = vec4(0.816497, -0.471405, 0.333333, 1);
 
-let lightPosition = vec4(10.0, 10.0, 0.0, 0.0);
+let lightPosition = vec4(5.0, 5.0, -5.0, 0.0);
 let lightAmbient = vec4(1.0, 1.0, 1.0, 0.5);
 let lightDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
 let lightSpecular = vec4(0.5, 0.5, 0.5, 1.0);
 
-let materialAmbient = vec4(0.5, 0.5, 0.5, 1.0);
-let materialDiffuse = vec4(0.5, 0.5, 0.5, 1.0);
-let materialSpecular = vec4(0.1, 0.1, 0.1, 1.0);
-let materialShininess = 15;
+let materialAmbient = vec4(1.0, 0.0, 0.0, 1.0);
+let materialDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
+let materialSpecular = vec4(1.0, 1.0, 1.0, 1.0);
+let materialShininess = 20;
 
 let modelViewMatrix, projectionMatrix;
 let modelViewMatrixLoc, projectionMatrixLoc;
 
-let eye;
+let eye = vec3(0.0, 0.0, 5.0);
 let at = vec3(0.0, 0.0, 0.0);
 let up = vec3(0.0, 1.0, 0.0);
 
@@ -161,9 +161,8 @@ function init() {
     render_chaikin();
 }
 
-function debug_info(state)
-{
-    if(!state) return;
+function debug_info(state) {
+    if (!state) return;
     console.log("SD: " + sphere_subdivisions + " | LD: " + line_subdivisions);
 }
 
@@ -201,7 +200,6 @@ function make_sphere() {
 }
 
 function render_sphere() {
-    eye = vec3(0.0, 0.0, 3.0);
     modelViewMatrix = lookAt(eye, at, up);
 
     // projectionMatrix = ortho(left, right, bottom, ytop, near, far);
