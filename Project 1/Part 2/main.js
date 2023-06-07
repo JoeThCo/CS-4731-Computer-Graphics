@@ -14,7 +14,6 @@ const MAX_LINE_SUBDIVISIONS = 7;
 
 let line_points = [];
 let line_control_points = []
-let new_points = []
 
 let position_attribute_location;
 let index = 0;
@@ -129,7 +128,6 @@ function init() {
     flatShadingArray = [];
 
     line_control_points = [];
-    new_points = [];
 
     canvas = document.getElementById("canvas");
 
@@ -214,8 +212,6 @@ function render_sphere() {
 }
 
 function make_chaikin() {
-    //points go here
-
     let size = 5.0;
 
     //top arc
@@ -290,6 +286,3 @@ function line_subdivision_down() {
 
     init();
 }
-
-
-
