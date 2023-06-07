@@ -153,9 +153,9 @@ function init() {
     debug_info(WANT_DEBUG_INFO);
 
     make_sphere();
-    render_sphere();
-
     make_chaikin();
+
+    render_sphere();
     render_chaikin();
 }
 
@@ -197,11 +197,20 @@ function make_sphere() {
     gl.uniform1f(gl.getUniformLocation(program, "u_shininess"), materialShininess);
 }
 
+let t = 0;
+
 function render_sphere() {
     modelViewMatrix = lookAt(eye, at, up);
-
-    // projectionMatrix = ortho(left, right, bottom, ytop, near, far);
     projectionMatrix = perspective(110, 1, -1, 1);
+
+    if (t <= 1) {
+        const t_index = Math.floor(t * (line_points.length - 1));
+
+        t += 0.005;
+        console.log(t + " " + t_index);
+    } else {
+        t = 0;
+    }
 
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix));
     gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix));
@@ -225,16 +234,16 @@ function make_chaikin() {
     line_control_points.push(vec4(-size, 0.0, 0.0, 1.0));
 
     line_points = chaikin(line_control_points, line_subdivisions);
+}
 
+function render_chaikin() {
     let vBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(line_points), gl.STATIC_DRAW);
 
     gl.vertexAttribPointer(position_attribute_location, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(position_attribute_location);
-}
 
-function render_chaikin() {
     gl.drawArrays(gl.LINES, 0, line_points.length);
 }
 
