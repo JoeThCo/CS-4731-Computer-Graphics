@@ -18,6 +18,9 @@ let line_control_points = []
 let position_attribute_location;
 let index = 0;
 
+let t = 0;
+let t_speed = 0.005;
+
 let pointsArray = [];
 let normalsArray = [];
 let flatShadingArray = [];
@@ -37,8 +40,8 @@ let materialDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
 let materialSpecular = vec4(1.0, 1.0, 1.0, 1.0);
 let materialShininess = 20;
 
-let modelViewMatrix, projectionMatrix;
-let modelViewMatrixLoc, projectionMatrixLoc;
+let model_position_matrix, modelViewMatrix, projectionMatrix;
+let model_position_matrix_Loc, modelViewMatrixLoc, projectionMatrixLoc;
 
 let eye = vec3(0.0, 0.0, 5.0);
 let at = vec3(0.0, 0.0, 0.0);
@@ -123,12 +126,6 @@ function chaikin(vertices, iterations) {
 }
 
 function init() {
-    pointsArray = [];
-    normalsArray = [];
-    flatShadingArray = [];
-
-    line_control_points = [];
-
     canvas = document.getElementById("canvas");
 
     gl = WebGLUtils.setupWebGL(canvas);
@@ -142,26 +139,86 @@ function init() {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
 
+    gl.enable(gl.CULL_FACE);
+    gl.cullFace(gl.BACK);
+
     //
     //  Load shaders and initialize attribute buffers
     //
     program = initShaders(gl, "vertex-shader", "fragment-shader");
     gl.useProgram(program);
 
+    sphere_init();
+    chaikin_init();
+
+    render();
+}
+
+function sphere_init(){
+    model_position_matrix_Loc = gl.getUniformLocation(program,"u_model_position_matrix");
+    modelViewMatrixLoc = gl.getUniformLocation(program, "u_model_view_matrix");
+    projectionMatrixLoc = gl.getUniformLocation(program, "u_projection_matrix");
+
+    let diffuseProduct = mult(lightDiffuse, materialDiffuse);
+    let specularProduct = mult(lightSpecular, materialSpecular);
+    let ambientProduct = mult(lightAmbient, materialAmbient);
+
+    gl.uniform4fv(gl.getUniformLocation(program, "u_diffuse_product"), flatten(diffuseProduct));
+    gl.uniform4fv(gl.getUniformLocation(program, "u_specular_product"), flatten(specularProduct));
+    gl.uniform4fv(gl.getUniformLocation(program, "u_ambient_product"), flatten(ambientProduct));
+    gl.uniform4fv(gl.getUniformLocation(program, "u_lightPosition"), flatten(lightPosition));
+    gl.uniform1f(gl.getUniformLocation(program, "u_shininess"), materialShininess);
+}
+
+function chaikin_init(){
+    make_chaikin();
+
+
+}
+function debug_info(state) {
+    if (!state) return;
+    console.log("SD: " + sphere_subdivisions + " | LD: " + line_subdivisions);
+}
+
+function render() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    pointsArray = [];
+    normalsArray = [];
+    flatShadingArray = [];
+    line_control_points = [];
 
     debug_info(WANT_DEBUG_INFO);
 
     make_sphere();
-    make_chaikin();
-
+    update_sphere_position();
     render_sphere();
+
     render_chaikin();
+
+    requestAnimationFrame(render);
 }
 
-function debug_info(state) {
-    if (!state) return;
-    console.log("SD: " + sphere_subdivisions + " | LD: " + line_subdivisions);
+function update_sphere_position() {
+    if (t <= 1) {
+        const t_index = Math.floor(t * (line_points.length - 1));
+        const start = line_points[t_index];
+        const end = line_points[t_index + 1];
+        const progress = (t * (line_points.length - 1)) % 1;
+
+        let x = start[0] + (end[0] - start[0]) * progress;
+        let y = start[1] + (end[1] - start[1]) * progress;
+        let z = start[2] + (end[2] - start[2]) * progress;
+
+        model_position_matrix = mat4();
+        model_position_matrix = translate(x, y, z);
+
+        t += t_speed;
+        //console.log(t + " " + t_index + " " + progress);
+        //console.log(sphere_position);
+    } else {
+        t = 0;
+    }
 }
 
 function make_sphere() {
@@ -182,36 +239,13 @@ function make_sphere() {
     let vNormalPosition = gl.getAttribLocation(program, "a_Normal");
     gl.vertexAttribPointer(vNormalPosition, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vNormalPosition);
-
-    modelViewMatrixLoc = gl.getUniformLocation(program, "u_model_view_matrix");
-    projectionMatrixLoc = gl.getUniformLocation(program, "u_projection_matrix");
-
-    let diffuseProduct = mult(lightDiffuse, materialDiffuse);
-    let specularProduct = mult(lightSpecular, materialSpecular);
-    let ambientProduct = mult(lightAmbient, materialAmbient);
-
-    gl.uniform4fv(gl.getUniformLocation(program, "u_diffuse_product"), flatten(diffuseProduct));
-    gl.uniform4fv(gl.getUniformLocation(program, "u_specular_product"), flatten(specularProduct));
-    gl.uniform4fv(gl.getUniformLocation(program, "u_ambient_product"), flatten(ambientProduct));
-    gl.uniform4fv(gl.getUniformLocation(program, "u_lightPosition"), flatten(lightPosition));
-    gl.uniform1f(gl.getUniformLocation(program, "u_shininess"), materialShininess);
 }
-
-let t = 0;
 
 function render_sphere() {
     modelViewMatrix = lookAt(eye, at, up);
     projectionMatrix = perspective(110, 1, -1, 1);
 
-    if (t <= 1) {
-        const t_index = Math.floor(t * (line_points.length - 1));
-
-        t += 0.005;
-        console.log(t + " " + t_index);
-    } else {
-        t = 0;
-    }
-
+    gl.uniformMatrix4fv(model_position_matrix_Loc,false,flatten(model_position_matrix))
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix));
     gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix));
 

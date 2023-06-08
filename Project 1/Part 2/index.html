@@ -11,6 +11,7 @@
 
     uniform mat4 u_model_view_matrix;
     uniform mat4 u_projection_matrix;
+    uniform mat4 u_model_position_matrix;
 
     uniform vec4 u_diffuse_product, u_specular_product, u_ambient_product;
 
@@ -35,7 +36,9 @@
         //Ambient
         vec4 ambient = u_ambient_product;
 
-        gl_Position = u_projection_matrix * u_model_view_matrix * a_Position;
+        mat4 mvp_matrix = u_projection_matrix * u_model_view_matrix;
+
+        gl_Position = mvp_matrix * u_model_position_matrix* a_Position;
 	    v_Color = diffuse + specular + ambient;
 	    v_Color.a = 1.0;
     }
