@@ -148,11 +148,25 @@ function init() {
     program = initShaders(gl, "vertex-shader", "fragment-shader");
     gl.useProgram(program);
 
+    set_color();
+
     sphere_init();
     chaikin_init();
 
     render();
     console.log("Init!")
+}
+
+function set_color(){
+    const red_slider = document.getElementById("red_slider");
+    const green_slider = document.getElementById("green_slider");
+    const blue_slider = document.getElementById("blue_slider");
+
+    const r = parseFloat(red_slider.value);
+    const g = parseFloat(green_slider.value);
+    const b = parseFloat(blue_slider.value);
+
+    materialAmbient = vec4(r, g, b, 1.0);
 }
 
 function sphere_init() {
