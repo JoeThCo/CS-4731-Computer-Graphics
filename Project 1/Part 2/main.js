@@ -2,8 +2,6 @@ let canvas;
 let gl;
 let program;
 
-const WANT_DEBUG_INFO = false;
-
 let sphere_subdivisions = 2;
 const MIN_SPHERE_SUBDIVISIONS = 1;
 const MAX_SPHERE_SUBDIVISIONS = 5;
@@ -42,6 +40,8 @@ let materialShininess = 20;
 
 let model_position_matrix, modelViewMatrix, projectionMatrix;
 let model_position_matrix_Loc, modelViewMatrixLoc, projectionMatrixLoc;
+
+let sphere_vBuffer, sphere_vNormal, chaikin_vBuffer;
 
 let eye = vec3(0.0, 0.0, 5.0);
 let at = vec3(0.0, 0.0, 0.0);
@@ -148,14 +148,17 @@ function init() {
     program = initShaders(gl, "vertex-shader", "fragment-shader");
     gl.useProgram(program);
 
+    clean_up();
+
     sphere_init();
     chaikin_init();
 
     render();
+    console.log("Init!")
 }
 
-function sphere_init(){
-    model_position_matrix_Loc = gl.getUniformLocation(program,"u_model_position_matrix");
+function sphere_init() {
+    model_position_matrix_Loc = gl.getUniformLocation(program, "u_model_position_matrix");
     modelViewMatrixLoc = gl.getUniformLocation(program, "u_model_view_matrix");
     projectionMatrixLoc = gl.getUniformLocation(program, "u_projection_matrix");
 
@@ -170,14 +173,8 @@ function sphere_init(){
     gl.uniform1f(gl.getUniformLocation(program, "u_shininess"), materialShininess);
 }
 
-function chaikin_init(){
+function chaikin_init() {
     make_chaikin();
-
-
-}
-function debug_info(state) {
-    if (!state) return;
-    console.log("SD: " + sphere_subdivisions + " | LD: " + line_subdivisions);
 }
 
 function render() {
@@ -188,8 +185,6 @@ function render() {
     flatShadingArray = [];
     line_control_points = [];
 
-    debug_info(WANT_DEBUG_INFO);
-
     make_sphere();
     update_sphere_position();
     render_sphere();
@@ -197,6 +192,34 @@ function render() {
     render_chaikin();
 
     requestAnimationFrame(render);
+
+    clean_up();
+}
+
+function clean_up() {
+    gl.deleteBuffer(sphere_vBuffer);
+    gl.deleteBuffer(sphere_vNormal);
+    gl.deleteBuffer(chaikin_vBuffer);
+}
+
+function make_sphere() {
+    tetrahedron(va, vb, vc, vd, sphere_subdivisions);
+
+    sphere_vBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, sphere_vBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW);
+
+    position_attribute_location = gl.getAttribLocation(program, "a_Position");
+    gl.vertexAttribPointer(position_attribute_location, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(position_attribute_location);
+
+    sphere_vNormal = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, sphere_vNormal);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(normalsArray), gl.STATIC_DRAW);
+
+    let vNormalPosition = gl.getAttribLocation(program, "a_Normal");
+    gl.vertexAttribPointer(vNormalPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vNormalPosition);
 }
 
 function update_sphere_position() {
@@ -210,42 +233,19 @@ function update_sphere_position() {
         let y = start[1] + (end[1] - start[1]) * progress;
         let z = start[2] + (end[2] - start[2]) * progress;
 
-        model_position_matrix = mat4();
         model_position_matrix = translate(x, y, z);
 
         t += t_speed;
-        //console.log(t + " " + t_index + " " + progress);
-        //console.log(sphere_position);
     } else {
         t = 0;
     }
-}
-
-function make_sphere() {
-    tetrahedron(va, vb, vc, vd, sphere_subdivisions);
-
-    let vBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW);
-
-    position_attribute_location = gl.getAttribLocation(program, "a_Position");
-    gl.vertexAttribPointer(position_attribute_location, 4, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(position_attribute_location);
-
-    let vNormal = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vNormal);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(normalsArray), gl.STATIC_DRAW);
-
-    let vNormalPosition = gl.getAttribLocation(program, "a_Normal");
-    gl.vertexAttribPointer(vNormalPosition, 4, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(vNormalPosition);
 }
 
 function render_sphere() {
     modelViewMatrix = lookAt(eye, at, up);
     projectionMatrix = perspective(110, 1, -1, 1);
 
-    gl.uniformMatrix4fv(model_position_matrix_Loc,false,flatten(model_position_matrix))
+    gl.uniformMatrix4fv(model_position_matrix_Loc, false, flatten(model_position_matrix))
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix));
     gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix));
 
@@ -271,8 +271,8 @@ function make_chaikin() {
 }
 
 function render_chaikin() {
-    let vBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
+    chaikin_vBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, chaikin_vBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(line_points), gl.STATIC_DRAW);
 
     gl.vertexAttribPointer(position_attribute_location, 4, gl.FLOAT, false, 0, 0);
