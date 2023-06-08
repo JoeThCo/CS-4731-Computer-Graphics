@@ -16,6 +16,7 @@ let line_control_points = []
 let position_attribute_location;
 let index = 0;
 
+let is_playing = true;
 let t = 0;
 let t_speed = 0.005;
 
@@ -149,12 +150,18 @@ function init() {
     gl.useProgram(program);
 
     set_color();
+    set_speed();
 
     sphere_init();
     chaikin_init();
 
     render();
     console.log("Init!")
+}
+
+function set_speed(){
+    const speed_slider = document.getElementById("speed_slider");
+    t_speed = parseFloat(speed_slider.value);
 }
 
 function set_color(){
@@ -167,6 +174,10 @@ function set_color(){
     const b = parseFloat(blue_slider.value);
 
     materialAmbient = vec4(r, g, b, 1.0);
+}
+
+function on_check(){
+    is_playing = !is_playing;
 }
 
 function sphere_init() {
@@ -230,26 +241,32 @@ function make_sphere() {
     gl.enableVertexAttribArray(vNormalPosition);
 }
 
+let x;
+let y;
+let z;
 function update_sphere_position() {
-    if (t < 1) {
-        const t_index = Math.floor(t * (line_points.length - 1));
-        const start = line_points[t_index];
-        const end = line_points[t_index + 1];
-        const progress = (t * (line_points.length - 1)) % 1;
+    if(is_playing)
+    {
+        if (t < 1) {
+            const t_index = Math.floor(t * (line_points.length - 1));
+            const start = line_points[t_index];
+            const end = line_points[t_index + 1];
+            const progress = (t * (line_points.length - 1)) % 1;
 
-        let x = start[0] + (end[0] - start[0]) * progress;
-        let y = start[1] + (end[1] - start[1]) * progress;
-        let z = start[2] + (end[2] - start[2]) * progress;
+            x = start[0] + (end[0] - start[0]) * progress;
+            y = start[1] + (end[1] - start[1]) * progress;
+            z = start[2] + (end[2] - start[2]) * progress;
 
-        model_position_matrix = translate(x, y, z);
-
-        t += t_speed;
-        if (t > 1) {
+            t += t_speed;
+            if (t > 1) {
+                t = 0;
+            }
+        } else {
             t = 0;
         }
-    } else {
-        t = 0;
     }
+
+    model_position_matrix = translate(x, y, z);
 }
 
 function render_sphere() {
