@@ -239,6 +239,9 @@ function update_sphere_position() {
 }
 
 function render_sphere() {
+    let move_sphere_location = gl.getUniformLocation(program, "is_sphere");
+    gl.uniform1i(move_sphere_location, 1);
+
     modelViewMatrix = lookAt(eye, at, up);
     projectionMatrix = perspective(110, 1, -1, 1);
 
@@ -268,6 +271,15 @@ function make_chaikin() {
 }
 
 function render_chaikin() {
+    let move_chaikin_location = gl.getUniformLocation(program, "is_sphere");
+    gl.uniform1i(move_chaikin_location, 0);
+
+    //let chaikin_position_matrix = rotateX(0);
+    let chaikin_position_matrix = mat4();
+
+    let chaikin_location = gl.getUniformLocation(program, "u_chaikin_position_matrix");
+    gl.uniformMatrix4fv(chaikin_location, false, flatten(chaikin_position_matrix))
+
     gl.bindBuffer(gl.ARRAY_BUFFER, chaikin_vBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(line_points), gl.STATIC_DRAW);
 
