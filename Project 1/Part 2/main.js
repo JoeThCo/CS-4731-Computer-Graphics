@@ -53,52 +53,6 @@ function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
 }
 
-function triangle(a, b, c) {
-    pointsArray.push(a);
-    pointsArray.push(b);
-    pointsArray.push(c);
-
-    flatShadingArray.push(a);
-    flatShadingArray.push(a);
-    flatShadingArray.push(a);
-
-    // normals are vectors
-    normalsArray.push(a[0], a[1], a[2], 0.0);
-    normalsArray.push(a[0], a[1], a[2], 0.0);
-    normalsArray.push(a[0], a[1], a[2], 0.0);
-
-    index += 3;
-}
-
-function divideTriangle(a, b, c, count) {
-    if (count > 0) {
-        //makes new points on the half ways of the input values
-        let ab = mix(a, b, 0.5);
-        let ac = mix(a, c, 0.5);
-        let bc = mix(b, c, 0.5);
-
-        //normlize all the new points
-        ab = normalize(ab, true);
-        ac = normalize(ac, true);
-        bc = normalize(bc, true);
-
-        //make new triangles
-        divideTriangle(a, ab, ac, count - 1);
-        divideTriangle(ab, b, bc, count - 1);
-        divideTriangle(bc, c, ac, count - 1);
-        divideTriangle(ab, bc, ac, count - 1);
-    } else {
-        triangle(a, b, c);
-    }
-}
-
-function tetrahedron(a, b, c, d, n) {
-    divideTriangle(a, b, c, n);
-    divideTriangle(d, c, b, n);
-    divideTriangle(a, d, b, n);
-    divideTriangle(a, c, d, n);
-}
-
 function chaikin(vertices, iterations) {
     //no iterations return array
     if (iterations === 0) {
@@ -209,8 +163,6 @@ function render() {
 }
 
 function make_sphere() {
-    tetrahedron(va, vb, vc, vd, sphere_subdivisions);
-
     gl.bindBuffer(gl.ARRAY_BUFFER, sphere_vBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW);
 
