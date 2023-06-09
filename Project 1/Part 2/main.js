@@ -40,7 +40,8 @@ let modelViewMatrixLoc, projectionMatrixLoc;
 let sphere_vBuffer, sphere_vNormalBuffer, chaikin_vBuffer;
 let line_start_location, line_end_location, progress_location;
 
-let eye = vec3(0.0, 0.0, 5.0);
+let fovy = 105;
+let eye = vec3(0.0, 0.0, 7.5);
 let at = vec3(0.0, 0.0, 0.0);
 let up = vec3(0.0, 1.0, 0.0);
 
@@ -90,9 +91,6 @@ function init() {
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
-
-    gl.enable(gl.CULL_FACE);
-    gl.cullFace(gl.BACK);
 
     //
     //  Load shaders and initialize attribute buffers
@@ -157,20 +155,50 @@ function render() {
     requestAnimationFrame(render);
 }
 
+let indices = [];
+
 function make_sphere() {
-    gl.bindBuffer(gl.ARRAY_BUFFER, sphere_vBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(sphere_points), gl.STATIC_DRAW);
+    // Define the cube vertices
+    const vertices = [
+        // Front face
+        -1.0, -1.0, 1.0,
+        1.0, -1.0, 1.0,
+        1.0, 1.0, 1.0,
+        -1.0, 1.0, 1.0,
+        // Back face
+        -1.0, -1.0, -1.0,
+        1.0, -1.0, -1.0,
+        1.0, 1.0, -1.0,
+        -1.0, 1.0, -1.0,
+    ];
+
+// Define the cube indices
+    indices = [
+        0, 1, 2, 0, 2, 3,  // Front face
+        4, 5, 6, 4, 6, 7,  // Back face
+        3, 2, 6, 3, 6, 7,  // Top face
+        0, 1, 5, 0, 5, 4,  // Bottom face
+        0, 4, 7, 0, 7, 3,  // Left face
+        1, 5, 6, 1, 6, 2   // Right face
+    ];
+
+
+    // Create the vertex buffer
+    const vertexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+    // Create the index buffer
+    const indexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 
     position_attribute_location = gl.getAttribLocation(program, "a_Position");
-    gl.vertexAttribPointer(position_attribute_location, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(position_attribute_location);
+    gl.vertexAttribPointer(position_attribute_location, 3, gl.FLOAT, false, 0, 0);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, sphere_vNormalBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(sphere_normals), gl.STATIC_DRAW);
-
-    let vNormalPosition = gl.getAttribLocation(program, "a_Normal");
-    gl.vertexAttribPointer(vNormalPosition, 4, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(vNormalPosition);
 }
 
 function render_sphere() {
@@ -178,14 +206,12 @@ function render_sphere() {
     gl.uniform1i(move_sphere_location, 1);
 
     modelViewMatrix = lookAt(eye, at, up);
-    projectionMatrix = perspective(110, 1, -1, 1);
+    projectionMatrix = perspective(fovy, 1, -1, 1);
 
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix));
     gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix));
 
-    for (let i = 0; i < index; i += 3) {
-        gl.drawArrays(gl.TRIANGLES, i, 3);
-    }
+    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
 }
 
 function make_chaikin() {
