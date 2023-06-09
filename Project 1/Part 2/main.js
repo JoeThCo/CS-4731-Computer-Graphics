@@ -14,7 +14,6 @@ let line_points = [];
 let line_control_points = []
 
 let position_attribute_location;
-let index = 0;
 
 let is_playing = true;
 let t = 0;
@@ -41,7 +40,7 @@ let sphere_vBuffer, sphere_vNormalBuffer, chaikin_vBuffer;
 let line_start_location, line_end_location, progress_location;
 
 let fovy = 105;
-let eye = vec3(0.0, 0.0, 7.5);
+let eye = vec3(0.0, 0.0, 5.0);
 let at = vec3(0.0, 0.0, 0.0);
 let up = vec3(0.0, 1.0, 0.0);
 
@@ -78,7 +77,6 @@ function chaikin(vertices, iterations) {
 }
 
 function init() {
-
     canvas = document.getElementById("canvas");
 
     gl = WebGLUtils.setupWebGL(canvas);
@@ -120,6 +118,7 @@ function view_init() {
     modelViewMatrixLoc = gl.getUniformLocation(program, "u_model_view_matrix");
     projectionMatrixLoc = gl.getUniformLocation(program, "u_projection_matrix");
 }
+
 function lighting_init() {
     let diffuseProduct = mult(lightDiffuse, materialDiffuse);
     let specularProduct = mult(lightSpecular, materialSpecular);
@@ -132,11 +131,11 @@ function lighting_init() {
     gl.uniform1f(gl.getUniformLocation(program, "u_shininess"), materialShininess);
 }
 
-
 function sphere_init() {
     sphere_vBuffer = gl.createBuffer();
     sphere_vNormalBuffer = gl.createBuffer();
 }
+
 function chaikin_init() {
     line_points = [];
     chaikin_vBuffer = gl.createBuffer();
@@ -146,58 +145,104 @@ function chaikin_init() {
 
 function render() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    sphere_points = [];
-    sphere_normals = [];
-    sphere_flat_shading = [];
     line_control_points = [];
 
-    make_sphere();
+    //const sphere_info = subdivide_cube(sphere_subdivisions);
+    const sphere_info = subdivide_cube(1);
+
+    make_sphere(sphere_info);
     update_sphere_position();
 
-    render_sphere();
+    render_sphere(sphere_info);
     render_chaikin();
 
     requestAnimationFrame(render);
 }
 
-let indices = [];
+const initial_vertices = [
+    // Cube vertices
+    -0.5, -0.5, -0.5,
+    0.5, -0.5, -0.5,
+    0.5, 0.5, -0.5,
+    -0.5, 0.5, -0.5,
+    -0.5, -0.5, 0.5,
+    0.5, -0.5, 0.5,
+    0.5, 0.5, 0.5,
+    -0.5, 0.5, 0.5
+];
 
-function make_sphere() {
-    // Define the cube vertices
-    const vertices = [
-        // Front face
-        -1.0, -1.0, 1.0,
-        1.0, -1.0, 1.0,
-        1.0, 1.0, 1.0,
-        -1.0, 1.0, 1.0,
-        // Back face
-        -1.0, -1.0, -1.0,
-        1.0, -1.0, -1.0,
-        1.0, 1.0, -1.0,
-        -1.0, 1.0, -1.0,
-    ];
+const initial_indices = [
+    // Cube indices
+    0, 1, 2, 0, 2, 3,  // Front face
+    1, 5, 6, 1, 6, 2,  // Right face
+    5, 4, 7, 5, 7, 6,  // Back face
+    4, 0, 3, 4, 3, 7,  // Left face
+    3, 2, 6, 3, 6, 7,  // Top face
+    4, 5, 1, 4, 1, 0   // Bottom face
+];
 
-// Define the cube indices
-    indices = [
-        0, 1, 2, 0, 2, 3,  // Front face
-        4, 5, 6, 4, 6, 7,  // Back face
-        3, 2, 6, 3, 6, 7,  // Top face
-        0, 1, 5, 0, 5, 4,  // Bottom face
-        0, 4, 7, 0, 7, 3,  // Left face
-        1, 5, 6, 1, 6, 2   // Right face
-    ];
+function getMidpoint(v1, v2) {
+    return [(v1[0] + v2[0]) * .5, (v1[1] + v2[1]) * .5, (v1[2] + v2[2]) * .5];
+}
 
+function subdivide_cube(sub_count) {
+    // Variables
+    let vertices = initial_vertices.slice();
+    let indices = initial_indices.slice();
 
+// Subdivide the faces
+    for (let level = 0; level < sub_count; level++) {
+        const newVertices = [];
+        const newIndices = [];
+
+        for (let i = 0; i < indices.length; i += 3) {
+            const v1 = indices[i];
+            const v2 = indices[i + 1];
+            const v3 = indices[i + 2];
+
+            const mid1 = getMidpoint(vertices[v1], vertices[v2]);
+            const mid2 = getMidpoint(vertices[v2], vertices[v3]);
+            const mid3 = getMidpoint(vertices[v3], vertices[v1]);
+
+            const midIndices = vertices.length / 3;
+
+            newVertices.push(
+                ...vertices.slice(v1 * 3, v1 * 3 + 3),
+                ...vertices.slice(v2 * 3, v2 * 3 + 3),
+                ...vertices.slice(v3 * 3, v3 * 3 + 3),
+                ...mid1,
+                ...mid2,
+                ...mid3
+            );
+
+            newIndices.push(
+                v1, midIndices, v3,
+                v2, midIndices + 1, v1,
+                v3, midIndices + 2, v2,
+                midIndices, midIndices + 1, midIndices + 2
+            );
+        }
+
+        vertices = newVertices;
+        indices = newIndices;
+    }
+
+    return {
+        sub_vertices: vertices,
+        sub_indices: indices
+    };
+}
+
+function make_sphere(sphere_info) {
     // Create the vertex buffer
     const vertexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sphere_info.sub_vertices), gl.STATIC_DRAW);
 
     // Create the index buffer
     const indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(sphere_info.sub_indices), gl.STATIC_DRAW);
 
     position_attribute_location = gl.getAttribLocation(program, "a_Position");
     gl.enableVertexAttribArray(position_attribute_location);
@@ -207,7 +252,7 @@ function make_sphere() {
     gl.bufferData(gl.ARRAY_BUFFER, flatten(sphere_normals), gl.STATIC_DRAW);
 }
 
-function render_sphere() {
+function render_sphere(sphere_info) {
     let move_sphere_location = gl.getUniformLocation(program, "is_sphere");
     gl.uniform1i(move_sphere_location, 1);
 
@@ -217,7 +262,7 @@ function render_sphere() {
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix));
     gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix));
 
-    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+    gl.drawElements(gl.TRIANGLES, sphere_info.sub_indices.length, gl.UNSIGNED_SHORT, 0);
 }
 
 function make_chaikin() {
