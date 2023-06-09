@@ -105,6 +105,9 @@ function init() {
     set_color();
     set_speed();
 
+    view_init();
+    lighting_init();
+
     sphere_init();
     chaikin_init();
 
@@ -113,13 +116,11 @@ function init() {
     console.log("Init!")
 }
 
-function sphere_init() {
-    sphere_vBuffer = gl.createBuffer();
-    sphere_vNormalBuffer = gl.createBuffer();
-
+function view_init() {
     modelViewMatrixLoc = gl.getUniformLocation(program, "u_model_view_matrix");
     projectionMatrixLoc = gl.getUniformLocation(program, "u_projection_matrix");
-
+}
+function lighting_init() {
     let diffuseProduct = mult(lightDiffuse, materialDiffuse);
     let specularProduct = mult(lightSpecular, materialSpecular);
     let ambientProduct = mult(lightAmbient, materialAmbient);
@@ -131,6 +132,11 @@ function sphere_init() {
     gl.uniform1f(gl.getUniformLocation(program, "u_shininess"), materialShininess);
 }
 
+
+function sphere_init() {
+    sphere_vBuffer = gl.createBuffer();
+    sphere_vNormalBuffer = gl.createBuffer();
+}
 function chaikin_init() {
     line_points = [];
     chaikin_vBuffer = gl.createBuffer();
@@ -264,6 +270,9 @@ function update_sphere_position() {
             gl.uniform3fv(line_end_location, [end[0], end[1], end[2]]);
 
             t += t_speed;
+            if (t > 1) {
+                t = 0;
+            }
         } else {
             t = 0;
         }
