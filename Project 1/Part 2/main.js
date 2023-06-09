@@ -39,10 +39,11 @@ let materialDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
 let materialSpecular = vec4(1.0, 1.0, 1.0, 1.0);
 let materialShininess = 20;
 
-let model_position_matrix, modelViewMatrix, projectionMatrix;
-let model_position_matrix_Loc, modelViewMatrixLoc, projectionMatrixLoc;
+let modelViewMatrix, projectionMatrix;
+let modelViewMatrixLoc, projectionMatrixLoc;
 
 let sphere_vBuffer, sphere_vNormalBuffer, chaikin_vBuffer;
+let line_start_location, line_end_location, progress_location;
 
 let eye = vec3(0.0, 0.0, 5.0);
 let at = vec3(0.0, 0.0, 0.0);
@@ -127,6 +128,7 @@ function chaikin(vertices, iterations) {
 }
 
 function init() {
+
     canvas = document.getElementById("canvas");
 
     gl = WebGLUtils.setupWebGL(canvas);
@@ -149,6 +151,10 @@ function init() {
     program = initShaders(gl, "vertex-shader", "fragment-shader");
     gl.useProgram(program);
 
+    line_start_location = gl.getUniformLocation(program, "u_line_start");
+    line_end_location = gl.getUniformLocation(program, "u_line_end");
+    progress_location = gl.getUniformLocation(program, "u_progress");
+
     set_color();
     set_speed();
 
@@ -156,6 +162,7 @@ function init() {
     chaikin_init();
 
     render();
+
     console.log("Init!")
 }
 
@@ -163,7 +170,6 @@ function sphere_init() {
     sphere_vBuffer = gl.createBuffer();
     sphere_vNormalBuffer = gl.createBuffer();
 
-    model_position_matrix_Loc = gl.getUniformLocation(program, "u_model_position_matrix");
     modelViewMatrixLoc = gl.getUniformLocation(program, "u_model_view_matrix");
     projectionMatrixLoc = gl.getUniformLocation(program, "u_projection_matrix");
 
@@ -195,8 +201,8 @@ function render() {
 
     make_sphere();
     update_sphere_position();
-    render_sphere();
 
+    render_sphere();
     render_chaikin();
 
     requestAnimationFrame(render);
@@ -227,7 +233,6 @@ function render_sphere() {
     modelViewMatrix = lookAt(eye, at, up);
     projectionMatrix = perspective(110, 1, -1, 1);
 
-    gl.uniformMatrix4fv(model_position_matrix_Loc, false, flatten(model_position_matrix))
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix));
     gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix));
 
@@ -271,39 +276,25 @@ function render_chaikin() {
     gl.drawArrays(gl.LINES, 0, line_points.length);
 }
 
-
-let x;
-let y;
-let z;
-
 function update_sphere_position() {
     if (is_playing) {
         if (t < 1) {
             const t_index = Math.floor(t * (line_points.length - 1));
-            const start = line_points[t_index];
-            const end = line_points[t_index + 1];
             const progress = (t * (line_points.length - 1)) % 1;
 
-            x = start[0] + (end[0] - start[0]) * progress;
-            y = start[1] + (end[1] - start[1]) * progress;
-            z = start[2] + (end[2] - start[2]) * progress;
+            const start = line_points[t_index];
+            const end = line_points[t_index + 1];
+
+            gl.uniform1f(progress_location, progress);
+
+            gl.uniform3fv(line_start_location, [start[0], start[1], start[2]]);
+            gl.uniform3fv(line_end_location, [end[0], end[1], end[2]]);
 
             t += t_speed;
-            if (t > 1) {
-                t = 0;
-            }
         } else {
             t = 0;
         }
     }
-
-    model_position_matrix = translate(x, y, z);
-}
-
-function delete_buffers(){
-    gl.deleteBuffer(chaikin_vBuffer);
-    gl.deleteBuffer(sphere_vBuffer);
-    gl.deleteBuffer(nor);
 }
 
 function on_key_down(event) {
