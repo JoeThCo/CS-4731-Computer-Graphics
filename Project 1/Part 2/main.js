@@ -42,7 +42,7 @@ let materialShininess = 20;
 let model_position_matrix, modelViewMatrix, projectionMatrix;
 let model_position_matrix_Loc, modelViewMatrixLoc, projectionMatrixLoc;
 
-let sphere_vBuffer, sphere_vNormal, chaikin_vBuffer;
+let sphere_vBuffer, sphere_vNormalBuffer, chaikin_vBuffer;
 
 let eye = vec3(0.0, 0.0, 5.0);
 let at = vec3(0.0, 0.0, 0.0);
@@ -159,30 +159,9 @@ function init() {
     console.log("Init!")
 }
 
-function set_speed(){
-    const speed_slider = document.getElementById("speed_slider");
-    t_speed = parseFloat(speed_slider.value);
-}
-
-function set_color(){
-    const red_slider = document.getElementById("red_slider");
-    const green_slider = document.getElementById("green_slider");
-    const blue_slider = document.getElementById("blue_slider");
-
-    const r = parseFloat(red_slider.value);
-    const g = parseFloat(green_slider.value);
-    const b = parseFloat(blue_slider.value);
-
-    materialAmbient = vec4(r, g, b, 1.0);
-}
-
-function on_check(){
-    is_playing = !is_playing;
-}
-
 function sphere_init() {
     sphere_vBuffer = gl.createBuffer();
-    sphere_vNormal = gl.createBuffer();
+    sphere_vNormalBuffer = gl.createBuffer();
 
     model_position_matrix_Loc = gl.getUniformLocation(program, "u_model_position_matrix");
     modelViewMatrixLoc = gl.getUniformLocation(program, "u_model_view_matrix");
@@ -233,40 +212,12 @@ function make_sphere() {
     gl.vertexAttribPointer(position_attribute_location, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(position_attribute_location);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, sphere_vNormal);
+    gl.bindBuffer(gl.ARRAY_BUFFER, sphere_vNormalBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(normalsArray), gl.STATIC_DRAW);
 
     let vNormalPosition = gl.getAttribLocation(program, "a_Normal");
     gl.vertexAttribPointer(vNormalPosition, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vNormalPosition);
-}
-
-let x;
-let y;
-let z;
-function update_sphere_position() {
-    if(is_playing)
-    {
-        if (t < 1) {
-            const t_index = Math.floor(t * (line_points.length - 1));
-            const start = line_points[t_index];
-            const end = line_points[t_index + 1];
-            const progress = (t * (line_points.length - 1)) % 1;
-
-            x = start[0] + (end[0] - start[0]) * progress;
-            y = start[1] + (end[1] - start[1]) * progress;
-            z = start[2] + (end[2] - start[2]) * progress;
-
-            t += t_speed;
-            if (t > 1) {
-                t = 0;
-            }
-        } else {
-            t = 0;
-        }
-    }
-
-    model_position_matrix = translate(x, y, z);
 }
 
 function render_sphere() {
@@ -320,6 +271,41 @@ function render_chaikin() {
     gl.drawArrays(gl.LINES, 0, line_points.length);
 }
 
+
+let x;
+let y;
+let z;
+
+function update_sphere_position() {
+    if (is_playing) {
+        if (t < 1) {
+            const t_index = Math.floor(t * (line_points.length - 1));
+            const start = line_points[t_index];
+            const end = line_points[t_index + 1];
+            const progress = (t * (line_points.length - 1)) % 1;
+
+            x = start[0] + (end[0] - start[0]) * progress;
+            y = start[1] + (end[1] - start[1]) * progress;
+            z = start[2] + (end[2] - start[2]) * progress;
+
+            t += t_speed;
+            if (t > 1) {
+                t = 0;
+            }
+        } else {
+            t = 0;
+        }
+    }
+
+    model_position_matrix = translate(x, y, z);
+}
+
+function delete_buffers(){
+    gl.deleteBuffer(chaikin_vBuffer);
+    gl.deleteBuffer(sphere_vBuffer);
+    gl.deleteBuffer(nor);
+}
+
 function on_key_down(event) {
     const key = event.key;
     if (key === 'q') {
@@ -331,6 +317,27 @@ function on_key_down(event) {
     } else if (key === 'j') {
         line_subdivision_down();
     }
+}
+
+function set_speed() {
+    const speed_slider = document.getElementById("speed_slider");
+    t_speed = parseFloat(speed_slider.value);
+}
+
+function set_color() {
+    const red_slider = document.getElementById("red_slider");
+    const green_slider = document.getElementById("green_slider");
+    const blue_slider = document.getElementById("blue_slider");
+
+    const r = parseFloat(red_slider.value);
+    const g = parseFloat(green_slider.value);
+    const b = parseFloat(blue_slider.value);
+
+    materialAmbient = vec4(r, g, b, 1.0);
+}
+
+function on_paused_checked() {
+    is_playing = !is_playing;
 }
 
 function clamp_line_subdivisions() {
