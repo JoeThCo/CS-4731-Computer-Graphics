@@ -20,14 +20,9 @@ let is_playing = true;
 let t = 0;
 let t_speed = 0.005;
 
-let pointsArray = [];
-let normalsArray = [];
-let flatShadingArray = [];
-
-let va = vec4(0.0, 0.0, -1.0, 1);
-let vb = vec4(0.0, 0.942809, 0.333333, 1);
-let vc = vec4(-0.816497, -0.471405, 0.333333, 1);
-let vd = vec4(0.816497, -0.471405, 0.333333, 1);
+let sphere_points = [];
+let sphere_normals = [];
+let sphere_flat_shading = [];
 
 let lightPosition = vec4(5.0, 5.0, -5.0, 0.0);
 let lightAmbient = vec4(1.0, 1.0, 1.0, 0.5);
@@ -148,9 +143,9 @@ function chaikin_init() {
 function render() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    pointsArray = [];
-    normalsArray = [];
-    flatShadingArray = [];
+    sphere_points = [];
+    sphere_normals = [];
+    sphere_flat_shading = [];
     line_control_points = [];
 
     make_sphere();
@@ -164,14 +159,14 @@ function render() {
 
 function make_sphere() {
     gl.bindBuffer(gl.ARRAY_BUFFER, sphere_vBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(sphere_points), gl.STATIC_DRAW);
 
     position_attribute_location = gl.getAttribLocation(program, "a_Position");
     gl.vertexAttribPointer(position_attribute_location, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(position_attribute_location);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, sphere_vNormalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(normalsArray), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(sphere_normals), gl.STATIC_DRAW);
 
     let vNormalPosition = gl.getAttribLocation(program, "a_Normal");
     gl.vertexAttribPointer(vNormalPosition, 4, gl.FLOAT, false, 0, 0);
