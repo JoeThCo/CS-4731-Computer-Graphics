@@ -3,7 +3,7 @@ let gl;
 let program;
 
 let sphere_subdivisions = 2;
-const MIN_SPHERE_SUBDIVISIONS = 1;
+const MIN_SPHERE_SUBDIVISIONS = 0;
 const MAX_SPHERE_SUBDIVISIONS = 4;
 
 let line_subdivisions = 3;
@@ -148,7 +148,7 @@ function render() {
     line_control_points = [];
 
     //const sphere_info = subdivide_cube(sphere_subdivisions);
-    const sphere_info = subdivide_cube(1);
+    const sphere_info = subdivide_cube(sphere_subdivisions);
 
     make_sphere(sphere_info);
     update_sphere_position();
@@ -181,56 +181,66 @@ const initial_indices = [
     4, 5, 1, 4, 1, 0   // Bottom face
 ];
 
-function getMidpoint(v1, v2) {
-    return [(v1[0] + v2[0]) * .5, (v1[1] + v2[1]) * .5, (v1[2] + v2[2]) * .5];
-}
-
 function subdivide_cube(sub_count) {
-    // Variables
-    let vertices = initial_vertices.slice();
+    const vertices = initial_vertices.slice();
     let indices = initial_indices.slice();
 
-// Subdivide the faces
     for (let level = 0; level < sub_count; level++) {
         const newVertices = [];
         const newIndices = [];
+        const vertexCache = {};
+
+        function getSubdividedVertex(v1, v2) {
+            const cacheKey = `${v1}_${v2}`;
+            if (vertexCache[cacheKey]) {
+                return vertexCache[cacheKey];
+            }
+
+            const index1 = v1 * 3;
+            const index2 = v2 * 3;
+            const v1Pos = vertices.slice(index1, index1 + 3);
+            const v2Pos = vertices.slice(index2, index2 + 3);
+
+            const newVertex = [
+                (v1Pos[0] + v2Pos[0]) / 2,
+                (v1Pos[1] + v2Pos[1]) / 2,
+                (v1Pos[2] + v2Pos[2]) / 2
+            ];
+
+            const newIndex = vertices.length / 3;
+            vertices.push(...newVertex);
+            vertexCache[cacheKey] = newIndex;
+            return newIndex;
+        }
 
         for (let i = 0; i < indices.length; i += 3) {
             const v1 = indices[i];
             const v2 = indices[i + 1];
             const v3 = indices[i + 2];
 
-            const mid1 = getMidpoint(vertices[v1], vertices[v2]);
-            const mid2 = getMidpoint(vertices[v2], vertices[v3]);
-            const mid3 = getMidpoint(vertices[v3], vertices[v1]);
-
-            const midIndices = vertices.length / 3;
-
-            newVertices.push(
-                ...vertices.slice(v1 * 3, v1 * 3 + 3),
-                ...vertices.slice(v2 * 3, v2 * 3 + 3),
-                ...vertices.slice(v3 * 3, v3 * 3 + 3),
-                ...mid1,
-                ...mid2,
-                ...mid3
-            );
+            const mid1 = getSubdividedVertex(v1, v2);
+            const mid2 = getSubdividedVertex(v2, v3);
+            const mid3 = getSubdividedVertex(v3, v1);
 
             newIndices.push(
-                v1, midIndices, v3,
-                v2, midIndices + 1, v1,
-                v3, midIndices + 2, v2,
-                midIndices, midIndices + 1, midIndices + 2
+                v1, mid1, mid3,
+                mid1, v2, mid2,
+                mid1, mid2, mid3,
+                mid3, mid2, v3
             );
         }
-
-        vertices = newVertices;
         indices = newIndices;
     }
 
-    return {
-        sub_vertices: vertices,
-        sub_indices: indices
-    };
+    for (let i = 0; i < vertices.length; i += 3) {
+        const vertex = vertices.slice(i, i + 3);
+        const length = Math.sqrt(vertex[0] ** 2 + vertex[1] ** 2 + vertex[2] ** 2);
+        vertices[i] /= length;
+        vertices[i + 1] /= length;
+        vertices[i + 2] /= length;
+    }
+
+    return {sub_vertices: vertices, sub_indices: indices}
 }
 
 function make_sphere(sphere_info) {
