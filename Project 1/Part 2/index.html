@@ -40,21 +40,22 @@
         //Ambient
         vec4 ambient = u_ambient_product;
 
-	    v_Color = diffuse + specular + ambient;
-	    v_Color.a = 1.0;
-
         mat4 mvp_matrix = u_projection_matrix * u_model_view_matrix;
         vec3 lerp_position = u_line_start + (u_line_end - u_line_start) * u_progress;
 
         if(is_sphere)
         {
+            v_Color = diffuse + specular + ambient;
+	        v_Color.a = 1.0;
             gl_Position = mvp_matrix * a_Position + vec4(lerp_position, 1.0);
         }
         else
         {
+            //line
             gl_Position = mvp_matrix * u_chaikin_position_matrix * a_Position;
         }
     }
+
 
     </script>
 
@@ -66,6 +67,7 @@
     {
         gl_FragColor = v_Color;
     }
+
 
 
 

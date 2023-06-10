@@ -28,12 +28,12 @@ let lightSpecular = vec4(1.0, 1.0, 1.0, 1.0);
 let materialAmbient = vec4(1.0, 0.0, 0.0, 1.0);
 let materialDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
 let materialSpecular = vec4(1.0, 1.0, 1.0, 1.0);
-let materialShininess = 20;
+let materialShininess = 1000;
 
 let modelViewMatrix, projectionMatrix;
 let modelViewMatrixLoc, projectionMatrixLoc;
 
-let sphere_vBuffer, sphere_normal_buffer, chaikin_vBuffer;
+let sphere_vBuffer, sphere_normal_buffer, chaikin_vertex_buffer;
 let line_start_location, line_end_location, progress_location;
 
 let fovy = 105;
@@ -107,7 +107,7 @@ function init() {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
 
-    console.log(line_subdivisions + " " + sphere_subdivisions);
+    //console.log(line_subdivisions + " " + sphere_subdivisions);
 
     //
     //  Load shaders and initialize attribute buffers
@@ -126,8 +126,6 @@ function init() {
     chaikin_init();
 
     render();
-
-    console.log("Init!")
 }
 
 function view_init() {
@@ -154,9 +152,10 @@ function sphere_init() {
 
 function chaikin_init() {
     line_points = [];
-    chaikin_vBuffer = gl.createBuffer();
+    chaikin_vertex_buffer = gl.createBuffer();
 
     make_chaikin();
+    console.log(line_points.length);
 }
 
 function render() {
@@ -333,7 +332,7 @@ function render_chaikin() {
     let chaikin_location = gl.getUniformLocation(program, "u_chaikin_position_matrix");
     gl.uniformMatrix4fv(chaikin_location, false, flatten(chaikin_position_matrix))
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, chaikin_vBuffer);
+    gl.bindBuffer(gl.ARRAY_BUFFER, chaikin_vertex_buffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(line_points), gl.STATIC_DRAW);
 
     gl.vertexAttribPointer(position_attribute_location, 4, gl.FLOAT, false, 0, 0);
