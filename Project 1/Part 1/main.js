@@ -59,71 +59,13 @@ function main() {
 
     file_input.addEventListener("change", on_file_upload, false);
 
-    //on key down
-    window.addEventListener("keydown", function (event) {
-        const key = event.key;
-        if (key === 'r') {
-            reset_user_input();
-            requestAnimationFrame(render);
-        } else if (key === 'Shift') {
-            is_shift_pressed_down = true;
-        }
-    })
+    window.addEventListener("keydown", on_key_down);
+    window.addEventListener("keyup", on_key_up);
 
-    //on key up
-    window.addEventListener("keyup", function (event) {
-        if (event.key === 'Shift') {
-            is_shift_pressed_down = false;
-        }
-    })
-
-    //scrollwheel
-    canvas.addEventListener("wheel", function (event) {
-        const delta = Math.sign(event.deltaY);
-
-        //scale
-        if (is_shift_pressed_down) {
-            //scroll down
-            if (delta > 0) {
-                on_scale(-SCALE_CHANGE)
-            }
-            //scroll up
-            else {
-                on_scale(SCALE_CHANGE)
-            }
-        }
-        //rotate
-        else {
-            //scroll down
-            if (delta > 0) {
-                on_rotate(-ROTATE_CHANGE)
-            }
-            //scroll up
-            else {
-                on_rotate(ROTATE_CHANGE)
-            }
-        }
-    })
-
-    //mouse down
-    canvas.addEventListener("mousedown", function (event) {
-        is_dragging_mouse = true;
-        previous_x = event.clientX;
-        previous_y = event.clientY;
-    })
-
-    //mouse move
-    canvas.addEventListener("mousemove", function (event) {
-        if (is_dragging_mouse) {
-            on_mouse_drag(event);
-        }
-    })
-
-    canvas.addEventListener("mouseup", function (event) {
-        is_dragging_mouse = false;
-        delta_x = 0;
-        delta_y = 0;
-    })
+    canvas.addEventListener("wheel", on_wheel_scroll);
+    canvas.addEventListener("mousedown", on_mouse_down);
+    canvas.addEventListener("mousemove", on_mouse_move);
+    canvas.addEventListener("mouseup", on_mouse_up);
 
     function on_file_upload(event) {
         let reader = new FileReader();
@@ -173,6 +115,67 @@ function main() {
 
         reader.readAsText(event.target.files[0]);
     }
+}
+
+function on_key_up(event) {
+    if (event.key === 'Shift') {
+        is_shift_pressed_down = false;
+    }
+}
+
+function on_key_down(event) {
+    const key = event.key;
+    if (key === 'r') {
+        reset_user_input();
+        requestAnimationFrame(render);
+    } else if (key === 'Shift') {
+        is_shift_pressed_down = true;
+    }
+}
+
+function on_wheel_scroll(event) {
+    const delta = event.deltaY;
+
+    //scale
+    if (is_shift_pressed_down) {
+        //scroll down
+        if (delta > 0) {
+            on_scale(-SCALE_CHANGE)
+        }
+        //scroll up
+        else {
+            on_scale(SCALE_CHANGE)
+        }
+    }
+    //rotate
+    else {
+        //scroll down
+        if (delta > 0) {
+            on_rotate(-ROTATE_CHANGE)
+        }
+        //scroll up
+        else {
+            on_rotate(ROTATE_CHANGE)
+        }
+    }
+}
+
+function on_mouse_down(event) {
+    is_dragging_mouse = true;
+    previous_x = event.clientX;
+    previous_y = event.clientY;
+}
+
+function on_mouse_move(event) {
+    if (is_dragging_mouse) {
+        on_mouse_drag(event);
+    }
+}
+
+function on_mouse_up(event) {
+    is_dragging_mouse = false;
+    delta_x = 0;
+    delta_y = 0;
 }
 
 function on_mouse_drag(event) {
@@ -265,7 +268,6 @@ function transformation_matrix_uniform() {
     //translate to origin (x, y)
     let current_x = user_translate_x + (svg_mid_x * svg_scale_x);
     let current_y = user_translate_y + (svg_mid_y * svg_scale_y);
-    console.log("C:" + current_x + "," + current_y);
 
     //translate
     let translate_matrix = translate(-current_x, -current_y, 0);
