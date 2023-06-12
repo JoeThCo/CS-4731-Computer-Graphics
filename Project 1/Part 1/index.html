@@ -12,20 +12,14 @@
 
         uniform mat4 u_view_matrix;
         uniform mat4 u_projection_matrix;
-
-        uniform mat4 u_to_position;
-        uniform mat4 u_to_origin;
-        uniform mat4 u_rotation;
-        uniform mat4 u_scale;
+        uniform mat4 u_model_matrix;
 
         uniform float u_point_size;
 
         void main()
         {
             mat4 mvp_matrix = u_view_matrix * u_projection_matrix;
-            mat4 transformation_matrix = u_to_origin * (u_rotation * u_scale);
-
-            gl_Position = mvp_matrix * transformation_matrix * a_position;
+            gl_Position = mvp_matrix * u_model_matrix * a_position;
 
             gl_PointSize = u_point_size;
             v_fColor = a_color;
