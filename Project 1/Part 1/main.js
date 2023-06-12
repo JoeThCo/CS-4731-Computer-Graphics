@@ -119,33 +119,28 @@ function main() {
 
 function transformation_matrix_uniform() {
     //translate to origin (x, y)
-    let current_x = user_translate_x + (svg_center_x * svg_scale_x);
-    let current_y = user_translate_y + (svg_center_y * svg_scale_y);
+    let current_x = user_translate_x + svg_center_x;
+    let current_y = user_translate_y + svg_center_y;
+
+    model_matrix = mat4();
 
     //translate
-    let translate_matrix = translate(-current_x, -current_y, 0);
-    model_matrix = mult(model_matrix, translate_matrix);
-    let translate_location = gl.getUniformLocation(program, "u_translate")
-    gl.uniformMatrix4fv(translate_location, false, flatten(translate_matrix));
-
-    let rotation_matrix = rotateZ(180 + user_rotate);
-    model_matrix = mult(model_matrix, rotation_matrix);
+    let origin_matrix = translate(-current_x, -current_y, 0);
+    model_matrix = mult(model_matrix, origin_matrix);
 
     //rotate
     let rotate_matrix = rotateZ(180 + user_rotate);
-    let rotate_location = gl.getUniformLocation(program, "u_rotation");
-    gl.uniformMatrix4fv(rotate_location, false, flatten(rotate_matrix));
+    model_matrix = mult(model_matrix, rotate_matrix);
 
     //scale
     let scale_matrix = scalem(svg_scale_x * user_scale, svg_scale_y * user_scale, 1.0);
     model_matrix = mult(model_matrix, scale_matrix);
 
-    //move from origin back to input coords
+    let translate_matrix = translate(current_x, current_y, 0);
+    model_matrix = mult(model_matrix, translate_matrix);
 
     let modelMatrix = gl.getUniformLocation(program, "u_model_matrix");
     gl.uniformMatrix4fv(modelMatrix, false, flatten(model_matrix));
-    let scale_location = gl.getUniformLocation(program, "u_scale");
-    gl.uniformMatrix4fv(scale_location, false, flatten(scale_matrix));
 }
 
 function on_key_up(event) {
