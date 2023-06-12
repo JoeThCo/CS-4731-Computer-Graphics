@@ -32,7 +32,7 @@ const MIN_SCALE = .1
 const MAX_SCALE = 10;
 
 const POINT_SIZE = 25;
-const CANVAS_SIZE = 400;
+const CANVAS_SIZE = 500;
 
 function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
@@ -84,8 +84,6 @@ function main() {
             points = lines[0];
             colors = lines[1];
 
-            console.log(points);
-
             //numbers
             let left = file_view_box[0];
             let bot = file_view_box[1];
@@ -121,10 +119,11 @@ function transformation_matrix_uniform() {
     //translate to origin (x, y)
     let current_x = user_translate_x + (svg_center_x * svg_scale_x);
     let current_y = user_translate_y + (svg_center_y * svg_scale_y);
+    console.log(current_x + " " + current_y);
 
-    //translate
-    let origin_matrix = translate(-current_x, -current_y, 0);
-    let origin_location = gl.getUniformLocation(program, "u_origin")
+    //translate to webgl origin
+    let origin_matrix = translate(current_x, current_y, 0);
+    let origin_location = gl.getUniformLocation(program, "u_to_origin")
     gl.uniformMatrix4fv(origin_location, false, flatten(origin_matrix));
 
     //rotate
@@ -137,10 +136,8 @@ function transformation_matrix_uniform() {
     let scale_location = gl.getUniformLocation(program, "u_scale");
     gl.uniformMatrix4fv(scale_location, false, flatten(scale_matrix))
 
-    //move from origin back to input coords
-    //translate
     let translate_matrix = translate(current_x, current_y, 0);
-    let translate_location = gl.getUniformLocation(program, "u_translate")
+    let translate_location = gl.getUniformLocation(program, "u_to_position")
     gl.uniformMatrix4fv(translate_location, false, flatten(translate_matrix));
 }
 
