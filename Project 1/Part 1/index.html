@@ -5,16 +5,16 @@
     <title>Joe's Graphics Editor</title>
 
     <script id="vshader" type="x-shader/x-vertex">
-        attribute vec4 a_vPosition;
-        attribute vec4 a_vColor;
+        attribute vec4 a_position;
+        attribute vec4 a_color;
 
         varying vec4 v_fColor;
 
         uniform mat4 u_view_matrix;
-        uniform mat4 u_model_matrix;
         uniform mat4 u_projection_matrix;
 
         uniform mat4 u_translate;
+        uniform mat4 u_origin;
         uniform mat4 u_rotation;
         uniform mat4 u_scale;
 
@@ -23,12 +23,16 @@
         void main()
         {
             mat4 mvp_matrix = u_view_matrix * u_projection_matrix;
-            mat4 transformation_matrix = u_translate * u_rotation * u_scale;
-            gl_Position = mvp_matrix * transformation_matrix * a_vPosition;
+
+            mat4 transformation_matrix = u_origin;
+            transformation_matrix *= u_rotation * u_scale;
+
+            gl_Position = mvp_matrix * transformation_matrix * a_position;
 
             gl_PointSize = u_point_size;
-            v_fColor = a_vColor;
+            v_fColor = a_color;
         }
+
     </script>
 
     <script id="fshader" type="x-shader/x-fragment">
@@ -39,8 +43,6 @@
         {
             gl_FragColor = v_fColor;
         }
-
-
     </script>
 
     <script src="lib/webgl-utils.js"></script>
@@ -57,7 +59,7 @@
 <div style="text-align: center">
     <h1 id='htitle'>Joe Colley's Graphics Editor</h1>
 
-    <canvas id="webgl" width="400" height="400" style="border: 1px solid black;">
+    <canvas id="webgl" width="400" height="400" style="border: 3px solid black;">
         Please use a browser that supports the "canvas" tag.
     </canvas>
 

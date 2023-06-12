@@ -123,13 +123,9 @@ function transformation_matrix_uniform() {
     let current_y = user_translate_y + (svg_center_y * svg_scale_y);
 
     //translate
-    let translate_matrix = translate(-current_x, -current_y, 0);
-    model_matrix = mult(model_matrix, translate_matrix);
-    let translate_location = gl.getUniformLocation(program, "u_translate")
-    gl.uniformMatrix4fv(translate_location, false, flatten(translate_matrix));
-
-    let rotation_matrix = rotateZ(180 + user_rotate);
-    model_matrix = mult(model_matrix, rotation_matrix);
+    let origin_matrix = translate(-current_x, -current_y, 0);
+    let origin_location = gl.getUniformLocation(program, "u_origin")
+    gl.uniformMatrix4fv(origin_location, false, flatten(origin_matrix));
 
     //rotate
     let rotate_matrix = rotateZ(180 + user_rotate);
@@ -138,14 +134,14 @@ function transformation_matrix_uniform() {
 
     //scale
     let scale_matrix = scalem(svg_scale_x * user_scale, svg_scale_y * user_scale, 1.0);
-    model_matrix = mult(model_matrix, scale_matrix);
+    let scale_location = gl.getUniformLocation(program, "u_scale");
+    gl.uniformMatrix4fv(scale_location, false, flatten(scale_matrix))
 
     //move from origin back to input coords
-
-    let modelMatrix = gl.getUniformLocation(program, "u_model_matrix");
-    gl.uniformMatrix4fv(modelMatrix, false, flatten(model_matrix));
-    let scale_location = gl.getUniformLocation(program, "u_scale");
-    gl.uniformMatrix4fv(scale_location, false, flatten(scale_matrix));
+    //translate
+    let translate_matrix = translate(current_x, current_y, 0);
+    let translate_location = gl.getUniformLocation(program, "u_translate")
+    gl.uniformMatrix4fv(translate_location, false, flatten(translate_matrix));
 }
 
 function on_key_up(event) {
@@ -259,13 +255,13 @@ function point_size_uniform() {
 }
 
 function position_attribute() {
-    let vertex_Position = gl.getAttribLocation(program, "a_vPosition");
+    let vertex_Position = gl.getAttribLocation(program, "a_position");
     gl.enableVertexAttribArray(vertex_Position);
     gl.vertexAttribPointer(vertex_Position, 2, gl.FLOAT, false, 0, 0);
 }
 
 function color_attribute() {
-    let vertex_Color = gl.getAttribLocation(program, "a_vColor");
+    let vertex_Color = gl.getAttribLocation(program, "a_color");
     gl.enableVertexAttribArray(vertex_Color);
     gl.vertexAttribPointer(vertex_Color, 4, gl.FLOAT, false, 0, 0);
 }
