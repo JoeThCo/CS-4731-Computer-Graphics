@@ -155,7 +155,6 @@ function chaikin_init() {
     chaikin_vertex_buffer = gl.createBuffer();
 
     make_chaikin();
-    console.log(line_points.length);
 }
 
 function render() {
@@ -343,7 +342,7 @@ function render_chaikin() {
 
 function update_sphere_position() {
     if (is_playing) {
-        t += t_speed;
+        t += t_speed * 1 / line_points.length;
 
         if (t < 1) {
             const t_index = Math.floor(t * (line_points.length - 1));
