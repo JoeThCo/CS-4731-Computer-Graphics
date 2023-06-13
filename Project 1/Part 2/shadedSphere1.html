@@ -34,7 +34,7 @@ void main()
 
     if(isSphere)
     {
-        gl_Position = mvp_matrix * (vPosition + vec4(0.0,0.0,0.0, 1.0));
+        gl_Position = mvp_matrix * (vPosition + vec4(lerp_position.xy * 2.0, 0.0, 1.0));
     }
     else
     {
@@ -68,6 +68,8 @@ void main()
         gl_FragColor = fColor;
     }
 }
+
+
 </script>
 <script type="text/javascript" src="lib/webgl-utils.js"></script>
 <script type="text/javascript" src="lib/initShaders.js"></script>

@@ -13,7 +13,7 @@ const MAX_SPHERE_SUB = 5;
 
 let index = 0;
 let t = 0;
-let t_speed = .05;
+let t_speed = .005;
 
 let pointsArray = [];
 let normalsArray = [];
@@ -133,25 +133,28 @@ function init() {
     program = initShaders(gl, "vertex-shader", "fragment-shader");
     gl.useProgram(program);
 
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
     index = 0;
     pointsArray = [];
     normalsArray = [];
 
     window.addEventListener("keydown", on_key_down);
-    chaikin_init();
 
     render();
 }
 
 function render() {
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    chaikin_init();
+
     gl.uniform1i(gl.getUniformLocation(program, "isSphere"), 1);
     update_sphere_position();
     render_sphere();
 
     gl.uniform1i(gl.getUniformLocation(program, "isSphere"), 0);
     render_chaikin();
+
+    requestAnimationFrame(render);
 }
 
 function update_sphere_position() {
@@ -236,8 +239,10 @@ function render_chaikin() {
     gl.vertexAttribPointer(line_vPosition, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(line_vPosition);
 
+    let chaikin_position_matrix = mat4();
+
     modelViewMatrixLoc = gl.getUniformLocation(program, "lineViewMatrix");
-    gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(mat4()));
+    gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(chaikin_position_matrix));
 
     gl.drawArrays(gl.LINE_STRIP, 0, line_points.length);
 }
