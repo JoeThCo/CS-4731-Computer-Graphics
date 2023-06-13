@@ -10,6 +10,7 @@ let model_matrix;
 
 //image info
 let svg_scale_x = 1, svg_scale_y = 1;
+let svg_center_x = 0, svg_center_y = 0;
 
 //user input info
 let user_scale = 1;
@@ -58,9 +59,11 @@ function main() {
 
     file_input.addEventListener("change", on_file_upload, false);
 
+    //keyboard input
     window.addEventListener("keydown", on_key_down);
     window.addEventListener("keyup", on_key_up);
 
+    //for mouse input
     canvas.addEventListener("wheel", on_wheel_scroll);
     canvas.addEventListener("mousedown", on_mouse_down);
     canvas.addEventListener("mousemove", on_mouse_move);
@@ -84,6 +87,8 @@ function main() {
             colors = lines[1];
 
             //numbers
+            let left = file_view_box[0];
+            let bot = file_view_box[1];
             width = file_view_box[2];
             height = file_view_box[3];
 
@@ -91,14 +96,19 @@ function main() {
             aspect_ratio = width / height;
             console.log("Aspect Ratio: " + aspect_ratio);
 
+            //set up camera
             let projection_matrix = ortho(-1, 1, -1, 1, -1, 1);
             let projection_matrix_location = gl.getUniformLocation(program, "u_projection_matrix");
             gl.uniformMatrix4fv(projection_matrix_location, false, flatten(projection_matrix));
 
             gl.viewport(0, 0, CANVAS_SIZE, CANVAS_SIZE / aspect_ratio);
 
+            //get svg info
             svg_scale_x = 1 / width * 2;
             svg_scale_y = 1 / height * 2;
+
+            svg_center_x = left + (width * .5);
+            svg_center_y = bot + (height * .5);
 
             console.log("SVG Scale:" + svg_scale_x + "," + svg_scale_y);
             render();
@@ -110,12 +120,12 @@ function main() {
 
 function transformation_matrix_uniform() {
     //translate to origin (x, y)
-    let current_x = ((user_translate_x) * svg_scale_x) / (CANVAS_SIZE / width);
-    let current_y = ((user_translate_y) * svg_scale_y) / (CANVAS_SIZE / height);
+    let current_x = user_translate_x + (svg_center_x * svg_scale_x);
+    let current_y = user_translate_y + (svg_center_y * svg_scale_y);
     console.log(current_x + " " + current_y);
 
     //translate to webgl origin
-    let origin_matrix = translate(-current_x, -current_y, 0);
+    let origin_matrix = translate(current_x, current_y, 0);
     let origin_location = gl.getUniformLocation(program, "u_to_origin");
     gl.uniformMatrix4fv(origin_location, false, flatten(origin_matrix));
 
@@ -207,8 +217,8 @@ function on_mouse_drag(event) {
     delta_y = current_y - previous_y;
 
     //apply the delta
-    user_translate_x += delta_x;
-    user_translate_y += delta_y;
+    delta_x *= 1 / (CANVAS_SIZE * aspect_ratio) * width;
+    delta_y *= 1 / (CANVAS_SIZE * aspect_ratio) * height;
 
     //set previous position
     previous_x = current_x;

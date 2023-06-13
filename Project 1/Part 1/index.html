@@ -23,7 +23,7 @@
         void main()
         {
             mat4 mvp_matrix = u_view_matrix * u_projection_matrix;
-            mat4 transformation_matrix = u_to_origin * u_rotate * u_scale;
+            mat4 transformation_matrix = u_to_origin * (u_rotate * u_scale);
 
             gl_Position = mvp_matrix * transformation_matrix * a_position;
 
