@@ -10,7 +10,7 @@ let model_matrix;
 
 //image info
 let svg_scale_x = 1, svg_scale_y = 1;
-let svg_center_x = 0, svg_center_y = 0;
+let svg_center_x, svg_center_y;
 
 //user input info
 let user_scale = 1;
@@ -85,8 +85,6 @@ function main() {
             colors = lines[1];
 
             //numbers
-            let left = file_view_box[0];
-            let bot = file_view_box[1];
             width = file_view_box[2];
             height = file_view_box[3];
 
@@ -100,14 +98,14 @@ function main() {
 
             gl.viewport(0, 0, CANVAS_SIZE, CANVAS_SIZE / aspect_ratio);
 
-            svg_scale_x = 1 / (width * .5);
-            svg_scale_y = 1 / (height * .5);
+            svg_scale_x = 1 / width * 2;
+            svg_scale_y = 1 / height * 2;
+
+            svg_center_x = width * .5;
+            svg_center_y = height * .5;
+
             console.log("SVG Scale:" + svg_scale_x + "," + svg_scale_y);
-
-            svg_center_x = left + (width * .5);
-            svg_center_y = bot + (height * .5);
-            console.log("SVG Mid:" + svg_center_x + "," + svg_center_y);
-
+            console.log("SVG Origin:" + svg_center_x + "," + svg_center_y);
             render();
         };
 
@@ -117,27 +115,29 @@ function main() {
 
 function transformation_matrix_uniform() {
     //translate to origin (x, y)
-    let current_x = user_translate_x;
-    let current_y = user_translate_y;
-
-    model_matrix = mat4();
+    let current_x = ((user_translate_x + svg_center_x) * svg_scale_x) / (CANVAS_SIZE / width);
+    let current_y = ((user_translate_y + svg_center_y) * svg_scale_y) / (CANVAS_SIZE / height);
 
     //translate to webgl origin
     let origin_matrix = translate(-current_x, -current_y, 0);
-    model_matrix = mult(model_matrix, origin_matrix);
+    let origin_location = gl.getUniformLocation(program, "u_to_origin");
+    gl.uniformMatrix4fv(origin_location, false, flatten(origin_matrix));
 
     //rotate
     let rotate_matrix = rotateZ(180 + user_rotate);
     model_matrix = mult(model_matrix, rotate_matrix);
+    let rotate_location = gl.getUniformLocation(program, "u_rotate");
+    gl.uniformMatrix4fv(rotate_location, false, flatten(rotate_matrix));
 
     //scale
     let scale_matrix = scalem(svg_scale_x * user_scale, svg_scale_y * user_scale, 1.0);
     model_matrix = mult(model_matrix, scale_matrix);
+    let scale_location = gl.getUniformLocation(program, "u_scale");
+    gl.uniformMatrix4fv(scale_location, false, flatten(scale_matrix));
 
-    let translate_matrix = translate(current_x, current_y, 0);
-
-    let model_matrix_location = gl.getUniformLocation(program, "u_model_matrix")
-    gl.uniformMatrix4fv(model_matrix_location, false, flatten(model_matrix));
+    let to_point_matrix = translate(current_x, current_y, 0);
+    let to_point_location = gl.getUniformLocation(program, "u_to_point");
+    gl.uniformMatrix4fv(to_point_location, false, flatten(to_point_matrix));
 }
 
 function on_key_up(event) {
@@ -208,10 +208,6 @@ function on_mouse_drag(event) {
     //get the delta
     delta_x = current_x - previous_x;
     delta_y = current_y - previous_y;
-
-    //scale the delta
-    delta_x *= 1 / (CANVAS_SIZE * aspect_ratio) * width;
-    delta_y *= 1 / (CANVAS_SIZE * aspect_ratio) * height;
 
     //apply the delta
     user_translate_x += delta_x;
