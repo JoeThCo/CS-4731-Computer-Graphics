@@ -35,18 +35,14 @@ let materialShininess = 100.0;
 let modelViewMatrix, projectionMatrix;
 let modelViewMatrixLoc, projectionMatrixLoc;
 
-let eye = vec3(0, 0, 5.0);
+let eye = vec3(0, 0, 7.5);
 let at = vec3(0.0, 0.0, 0.0);
 let up = vec3(0.0, 1.0, 0.0);
 
-// Control vertices for line
-let line_control_points = [
-    vec4(-0.75, -0.5, 0.0, 1.0),
-    vec4(-0.25, 0.5, 0.0, 1.0),
-    vec4(0.25, 0.5, 0.0, 1.0),
-    vec4(0.75, -0.5, 0.0, 1.0)
-];
+const SIZE = .75;
+const HALF_SIZE = SIZE * .5;
 
+// Control vertices for line
 function chaikin(vertices, iterations) {
     if (iterations === 0) {
         return vertices;
@@ -137,7 +133,7 @@ function init() {
     render_chaikin();
 }
 
-function render_sphere(){
+function render_sphere() {
     gl.uniform1i(gl.getUniformLocation(program, "isSphere"), 1);
 
     //lighting
@@ -186,7 +182,15 @@ function render_sphere(){
     }
 }
 
-function render_chaikin(){
+// Control vertices for line
+let line_control_points = [
+    vec2(-0.75, -0.5),
+    vec2(-0.25, 0.5),
+    vec2(0.25, 0.5),
+    vec2(0.75, -0.5)
+];
+
+function render_chaikin() {
     gl.uniform1i(gl.getUniformLocation(program, "isSphere"), 0);
     let chaikin_points = chaikin(line_control_points, line_subdivisions)
 
@@ -195,7 +199,7 @@ function render_chaikin(){
     gl.bufferData(gl.ARRAY_BUFFER, flatten(chaikin_points), gl.STATIC_DRAW);
 
     let line_vPosition = gl.getAttribLocation(program, "vPosition");
-    gl.vertexAttribPointer(line_vPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(line_vPosition, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(line_vPosition);
 
     modelViewMatrixLoc = gl.getUniformLocation(program, "lineViewMatrix");
