@@ -164,9 +164,11 @@ function render() {
     //const sphere_info = subdivide_cube(sphere_subdivisions);
     const sphere_info = subdivide_cube(sphere_subdivisions);
 
+    //create items
     make_sphere(sphere_info);
     update_sphere_position();
 
+    //render to screen
     render_sphere(sphere_info);
     render_chaikin();
 
@@ -180,12 +182,13 @@ function subdivide_cube(sub_count) {
 
     //subdivide
     for (let level = 0; level < sub_count; level++) {
-        const newVertices = [];
         const newIndices = [];
         const vertexCache = {};
 
         function getSubdividedVertex(v1, v2) {
             const cacheKey = `${v1}_${v2}`;
+
+            //check if value has been calculated
             if (vertexCache[cacheKey]) {
                 return vertexCache[cacheKey];
             }
@@ -195,11 +198,11 @@ function subdivide_cube(sub_count) {
             const v1Pos = vertices.slice(index1, index1 + 3);
             const v2Pos = vertices.slice(index2, index2 + 3);
 
+            // Calculate the position of the new vertex by averaging the positions of the two vertices
             const newVertex = [
-                (v1Pos[0] + v2Pos[0]) / 2,
-                (v1Pos[1] + v2Pos[1]) / 2,
-                (v1Pos[2] + v2Pos[2]) / 2
-            ];
+                (v1Pos[0] + v2Pos[0]) * .5,
+                (v1Pos[1] + v2Pos[1]) * .5,
+                (v1Pos[2] + v2Pos[2]) * .5];
 
             const newIndex = vertices.length / 3;
             vertices.push(...newVertex);
@@ -212,10 +215,12 @@ function subdivide_cube(sub_count) {
             const v2 = indices[i + 1];
             const v3 = indices[i + 2];
 
+            // Add the new indices for the subdivided triangles
             const mid1 = getSubdividedVertex(v1, v2);
             const mid2 = getSubdividedVertex(v2, v3);
             const mid3 = getSubdividedVertex(v3, v1);
 
+            //add points in order
             newIndices.push(
                 v1, mid1, mid3,
                 mid1, v2, mid2,
@@ -280,13 +285,14 @@ function make_sphere(sphere_info) {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(sphere_info.sub_indices), gl.STATIC_DRAW);
 
+    //position info
     position_attribute_location = gl.getAttribLocation(program, "a_Position");
     gl.enableVertexAttribArray(position_attribute_location);
     gl.vertexAttribPointer(position_attribute_location, 3, gl.FLOAT, false, 0, 0);
 
+    //normals
     gl.bindBuffer(gl.ARRAY_BUFFER, sphere_normal_buffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sphere_info.sub_normals), gl.STATIC_DRAW);
-
     let normal_attribute_location = gl.getAttribLocation(program, "a_Normal");
     gl.enableVertexAttribArray(normal_attribute_location);
     gl.vertexAttribPointer(normal_attribute_location, 4, gl.FLOAT, false, 0, 0);
@@ -308,14 +314,16 @@ function render_sphere(sphere_info) {
 function make_chaikin() {
     let size = 5.0;
 
-    //top arc
     line_control_points.push(vec4(size, 0.0, 0.0));
     line_control_points.push(vec4(0.0, size, 0.0));
     line_control_points.push(vec4(-size, 0.0, 0.0));
 
-    //bot arc
     line_control_points.push(vec4(size, 0.0, 0.0));
     line_control_points.push(vec4(0.0, -size, 0.0));
+    line_control_points.push(vec4(-size, 0.0, 0.0));
+
+    line_control_points.push(vec4(size, 0.0, 0.0));
+    line_control_points.push(vec4(0.0, size, 0.0));
     line_control_points.push(vec4(-size, 0.0, 0.0));
 
     line_points = chaikin(line_control_points, line_subdivisions);
@@ -342,7 +350,7 @@ function render_chaikin() {
 
 function update_sphere_position() {
     if (is_playing) {
-        t += t_speed * 1 / line_points.length;
+        t += t_speed;
 
         if (t < 1) {
             const t_index = Math.floor(t * (line_points.length - 1));

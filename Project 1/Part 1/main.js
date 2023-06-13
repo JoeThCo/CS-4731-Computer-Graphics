@@ -10,7 +10,6 @@ let model_matrix;
 
 //image info
 let svg_scale_x = 1, svg_scale_y = 1;
-let svg_center_x, svg_center_y;
 
 //user input info
 let user_scale = 1;
@@ -101,11 +100,7 @@ function main() {
             svg_scale_x = 1 / width * 2;
             svg_scale_y = 1 / height * 2;
 
-            svg_center_x = width * .5;
-            svg_center_y = height * .5;
-
             console.log("SVG Scale:" + svg_scale_x + "," + svg_scale_y);
-            console.log("SVG Origin:" + svg_center_x + "," + svg_center_y);
             render();
         };
 
@@ -115,8 +110,9 @@ function main() {
 
 function transformation_matrix_uniform() {
     //translate to origin (x, y)
-    let current_x = ((user_translate_x + svg_center_x) * svg_scale_x) / (CANVAS_SIZE / width);
-    let current_y = ((user_translate_y + svg_center_y) * svg_scale_y) / (CANVAS_SIZE / height);
+    let current_x = ((user_translate_x) * svg_scale_x) / (CANVAS_SIZE / width);
+    let current_y = ((user_translate_y) * svg_scale_y) / (CANVAS_SIZE / height);
+    console.log(current_x + " " + current_y);
 
     //translate to webgl origin
     let origin_matrix = translate(-current_x, -current_y, 0);
@@ -135,6 +131,7 @@ function transformation_matrix_uniform() {
     let scale_location = gl.getUniformLocation(program, "u_scale");
     gl.uniformMatrix4fv(scale_location, false, flatten(scale_matrix));
 
+    //Could not get to work properly
     let to_point_matrix = translate(current_x, current_y, 0);
     let to_point_location = gl.getUniformLocation(program, "u_to_point");
     gl.uniformMatrix4fv(to_point_location, false, flatten(to_point_matrix));
