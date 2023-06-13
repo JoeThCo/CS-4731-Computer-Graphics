@@ -27,6 +27,7 @@ void main()
 }
 
 
+
 </script>
 
 <script id="fragment-shader" type="x-shader/x-fragment">
@@ -39,7 +40,6 @@ uniform float shininess;
 
 void main()
 {
-
 	vec3 R = (2.0 * dot(L, N) * N) - L;
 
     vec4 diffuse = diffuseProduct * dot(L, N);
@@ -50,25 +50,21 @@ void main()
     fColor.a = 1.0;
 
     gl_FragColor = fColor;
-
 }
 
-
 </script>
-
 <script type="text/javascript" src="lib/webgl-utils.js"></script>
 <script type="text/javascript" src="lib/initShaders.js"></script>
 
 <script type="text/javascript" src="lib/MV.js"></script>
 <script type="text/javascript" src="shadedSphere1.js"></script>
 
-<body>
+<body onload="init()">
 <div style="text-align: center">
     <h3>Joe's Sphere Path Follower</h3>
     <canvas id="gl-canvas" width="512" height="512" style="border: 1px solid black;">
         Epic fail!
     </canvas>
 </div>
-
 </body>
 </html>
