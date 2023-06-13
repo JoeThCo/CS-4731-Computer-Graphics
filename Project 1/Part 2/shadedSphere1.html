@@ -15,10 +15,16 @@ uniform mat4 lineViewMatrix;
 uniform mat4 projectionMatrix;
 uniform bool isSphere;
 
+uniform float u_progress;
+uniform vec3 u_line_start;
+uniform vec3 u_line_end;
+
 varying vec3 L, N, V;
 
 void main()
 {
+    vec3 lerp_position = u_line_start + (u_line_end - u_line_start) * u_progress;
+
     vec3 pos = (modelViewMatrix * vPosition).xyz;
     L = normalize(lightPosition.xyz - pos);
     N = normalize(modelViewMatrix * vNormal).xyz;
@@ -33,7 +39,6 @@ void main()
         gl_Position = lineViewMatrix * vPosition;
     }
 }
-
 
 
 </script>
@@ -63,6 +68,8 @@ void main()
         gl_FragColor = fColor;
     }
 }
+
+
 
 </script>
 <script type="text/javascript" src="lib/webgl-utils.js"></script>

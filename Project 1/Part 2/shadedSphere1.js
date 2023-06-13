@@ -2,7 +2,8 @@ let canvas;
 let gl;
 let program;
 
-let line_subdivisions = 6;
+let line_points = [];
+let line_subdivisions = 1;
 
 let sphere_subdivisions = 1;
 const MAX_SPHERE_SUB = 5;
@@ -39,8 +40,15 @@ let eye = vec3(0, 0, 7.5);
 let at = vec3(0.0, 0.0, 0.0);
 let up = vec3(0.0, 1.0, 0.0);
 
-const SIZE = .75;
-const HALF_SIZE = SIZE * .5;
+let is_playing = true;
+
+// Control vertices for line
+let line_control_points = [
+    vec2(-0.75, -0.5),
+    vec2(-0.25, 0.5),
+    vec2(0.25, 0.5),
+    vec2(0.75, -0.5)
+];
 
 // Control vertices for line
 function chaikin(vertices, iterations) {
@@ -129,8 +137,34 @@ function init() {
 
     window.addEventListener("keydown", on_key_down);
 
+    render();
+}
+
+function render() {
     render_sphere();
     render_chaikin();
+}
+
+function update_sphere_position() {
+    if (is_playing) {
+        if (t < 1) {
+            const t_index = Math.floor(t * (line_points.length - 1));
+            const progress = (t * (line_points.length - 1)) % 1;
+
+            const start = line_points[t_index];
+            const end = line_points[t_index + 1];
+
+
+            gl.uniform1f(progress_location, progress);
+
+            gl.uniform3fv(line_start_location, [start[0], start[1], start[2]]);
+            gl.uniform3fv(line_end_location, [end[0], end[1], end[2]]);
+
+            t += t_speed;
+        } else {
+            t = 0;
+        }
+    }
 }
 
 function render_sphere() {
@@ -182,21 +216,16 @@ function render_sphere() {
     }
 }
 
-// Control vertices for line
-let line_control_points = [
-    vec2(-0.75, -0.5),
-    vec2(-0.25, 0.5),
-    vec2(0.25, 0.5),
-    vec2(0.75, -0.5)
-];
 
 function render_chaikin() {
     gl.uniform1i(gl.getUniformLocation(program, "isSphere"), 0);
-    let chaikin_points = chaikin(line_control_points, line_subdivisions)
+
+    line_points = [];
+    line_points = chaikin(line_control_points, line_subdivisions)
 
     let line_vBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, line_vBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(chaikin_points), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(line_points), gl.STATIC_DRAW);
 
     let line_vPosition = gl.getAttribLocation(program, "vPosition");
     gl.vertexAttribPointer(line_vPosition, 2, gl.FLOAT, false, 0, 0);
@@ -205,7 +234,7 @@ function render_chaikin() {
     modelViewMatrixLoc = gl.getUniformLocation(program, "lineViewMatrix");
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(mat4()));
 
-    gl.drawArrays(gl.LINE_STRIP, 0, chaikin_points.length);
+    gl.drawArrays(gl.LINE_STRIP, 0, line_points.length);
 }
 
 function on_key_down(event) {
