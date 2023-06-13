@@ -4,12 +4,16 @@ let program;
 
 let line_points = [];
 let line_subdivisions = 1;
+const MIN_LINE_SUB = 0;
+const MAX_LINE_SUB = 8;
 
 let sphere_subdivisions = 1;
-const MAX_SPHERE_SUB = 5;
 const MIN_SPHERE_SUB = 0;
+const MAX_SPHERE_SUB = 5;
 
 let index = 0;
+let t = 0;
+let t_speed = .05;
 
 let pointsArray = [];
 let normalsArray = [];
@@ -36,18 +40,18 @@ let materialShininess = 100.0;
 let modelViewMatrix, projectionMatrix;
 let modelViewMatrixLoc, projectionMatrixLoc;
 
-let eye = vec3(0, 0, 7.5);
+let eye = vec3(0, 0, 2.5);
 let at = vec3(0.0, 0.0, 0.0);
 let up = vec3(0.0, 1.0, 0.0);
 
 let is_playing = true;
 
+let SIZE = 1.5;
 // Control vertices for line
 let line_control_points = [
-    vec2(-0.75, -0.5),
-    vec2(-0.25, 0.5),
-    vec2(0.25, 0.5),
-    vec2(0.75, -0.5)
+    vec2(-SIZE, -SIZE),
+    vec2(-SIZE, SIZE),
+    vec2(SIZE, SIZE),
 ];
 
 // Control vertices for line
@@ -136,12 +140,17 @@ function init() {
     normalsArray = [];
 
     window.addEventListener("keydown", on_key_down);
+    chaikin_init();
 
     render();
 }
 
 function render() {
+    gl.uniform1i(gl.getUniformLocation(program, "isSphere"), 1);
+    update_sphere_position();
     render_sphere();
+
+    gl.uniform1i(gl.getUniformLocation(program, "isSphere"), 0);
     render_chaikin();
 }
 
@@ -154,11 +163,10 @@ function update_sphere_position() {
             const start = line_points[t_index];
             const end = line_points[t_index + 1];
 
+            gl.uniform1f(gl.getUniformLocation(program, "u_progress"), progress);
 
-            gl.uniform1f(progress_location, progress);
-
-            gl.uniform3fv(line_start_location, [start[0], start[1], start[2]]);
-            gl.uniform3fv(line_end_location, [end[0], end[1], end[2]]);
+            gl.uniform3fv(gl.getUniformLocation(program, "u_line_start"), [start[0], start[1], start[2]]);
+            gl.uniform3fv(gl.getUniformLocation(program, "u_line_end"), [end[0], end[1], end[2]]);
 
             t += t_speed;
         } else {
@@ -168,8 +176,6 @@ function update_sphere_position() {
 }
 
 function render_sphere() {
-    gl.uniform1i(gl.getUniformLocation(program, "isSphere"), 1);
-
     //lighting
     let diffuseProduct = mult(lightDiffuse, materialDiffuse);
     let specularProduct = mult(lightSpecular, materialSpecular);
@@ -216,13 +222,12 @@ function render_sphere() {
     }
 }
 
-
-function render_chaikin() {
-    gl.uniform1i(gl.getUniformLocation(program, "isSphere"), 0);
-
+function chaikin_init() {
     line_points = [];
     line_points = chaikin(line_control_points, line_subdivisions)
+}
 
+function render_chaikin() {
     let line_vBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, line_vBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(line_points), gl.STATIC_DRAW);
@@ -245,16 +250,15 @@ function on_key_down(event) {
     } else if (key === 'e') {
         on_sphere_subdivision_change(1);
     } else if (key === 'j') {
-
+        on_line_subdivision_change(-1);
     } else if (key === 'i') {
-
+        on_line_subdivision_change(1);
     }
 }
 
 function on_sphere_subdivision_change(change) {
     sphere_subdivisions += change;
 
-    //clamp?
     if (sphere_subdivisions < MIN_SPHERE_SUB) {
         sphere_subdivisions = MIN_SPHERE_SUB;
     }
@@ -263,5 +267,19 @@ function on_sphere_subdivision_change(change) {
     }
 
     console.log(sphere_subdivisions);
+    init();
+}
+
+function on_line_subdivision_change(change) {
+    line_subdivisions += change;
+
+    if (line_subdivisions < MIN_LINE_SUB) {
+        line_subdivisions = MIN_LINE_SUB;
+    }
+    if (line_subdivisions > MAX_LINE_SUB) {
+        line_subdivisions = MAX_LINE_SUB;
+    }
+
+    console.log(line_subdivisions);
     init();
 }

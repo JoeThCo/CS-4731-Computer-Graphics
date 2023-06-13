@@ -30,16 +30,17 @@ void main()
     N = normalize(modelViewMatrix * vNormal).xyz;
     V = normalize(-pos);
 
+    mat4 mvp_matrix = projectionMatrix * modelViewMatrix;
+
     if(isSphere)
     {
-        gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+        gl_Position = mvp_matrix * (vPosition + vec4(0.0,0.0,0.0, 1.0));
     }
     else
     {
-        gl_Position = lineViewMatrix * vPosition;
+        gl_Position = mvp_matrix * lineViewMatrix * vPosition;
     }
 }
-
 
 </script>
 
@@ -51,7 +52,6 @@ varying vec3 L, N, V;
 uniform vec4 ambientProduct, diffuseProduct, specularProduct;
 uniform float shininess;
 uniform bool isSphere;
-
 
 void main()
 {
@@ -68,9 +68,6 @@ void main()
         gl_FragColor = fColor;
     }
 }
-
-
-
 </script>
 <script type="text/javascript" src="lib/webgl-utils.js"></script>
 <script type="text/javascript" src="lib/initShaders.js"></script>
