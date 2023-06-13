@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 
+<title>Joe Colley's Path Follower</title>
 <script id="vertex-shader" type="x-shader/x-vertex">
 
 // assume both position and normal are in homogeneous form
@@ -16,17 +17,11 @@ void main()
 {
     vec3 pos = (modelViewMatrix * vPosition).xyz;
     L = normalize(lightPosition.xyz - pos);
-
     N = normalize(modelViewMatrix * vNormal).xyz;
-
-
     V = normalize(-pos);
 
     gl_Position = projectionMatrix * modelViewMatrix * vPosition;
-	//fColor = vec4( 1.0, 0.0, 1.0, 1.0 );
 }
-
-
 
 </script>
 
@@ -61,7 +56,7 @@ void main()
 
 <body onload="init()">
 <div style="text-align: center">
-    <h3>Joe's Sphere Path Follower</h3>
+    <h1>Joe Colley's Path Follower</h1>
     <canvas id="gl-canvas" width="512" height="512" style="border: 1px solid black;">
         Epic fail!
     </canvas>
