@@ -125,12 +125,20 @@ function init() {
     program = initShaders(gl, "vertex-shader", "fragment-shader");
     gl.useProgram(program);
 
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
     index = 0;
     pointsArray = [];
     normalsArray = [];
 
     window.addEventListener("keydown", on_key_down);
 
+    render_sphere();
+    render_chaikin();
+}
+
+function render_sphere(){
+    gl.uniform1i(gl.getUniformLocation(program, "isSphere"), 1);
 
     //lighting
     let diffuseProduct = mult(lightDiffuse, materialDiffuse);
@@ -167,9 +175,6 @@ function init() {
     gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"), flatten(lightPosition));
     gl.uniform1f(gl.getUniformLocation(program, "shininess"), materialShininess);
 
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    gl.uniform1i(gl.getUniformLocation(program, "isSphere"), 1);
     modelViewMatrix = lookAt(eye, at, up);
     projectionMatrix = perspective(fovy, 1, near, far);
 
@@ -179,7 +184,9 @@ function init() {
     for (let i = 0; i < index; i += 3) {
         gl.drawArrays(gl.TRIANGLES, i, 3);
     }
+}
 
+function render_chaikin(){
     gl.uniform1i(gl.getUniformLocation(program, "isSphere"), 0);
     let chaikin_points = chaikin(line_control_points, line_subdivisions)
 
