@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+
+// assume both position and normal are in homogeneous form
+
+attribute vec4 vPosition;
+attribute vec4 vNormal;
+uniform vec4 lightPosition;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+varying vec3 L, N, V;
+
+void main()
+{
+    vec3 pos = (modelViewMatrix * vPosition).xyz;
+    L = normalize(lightPosition.xyz - pos);
+
+    N = normalize(modelViewMatrix * vNormal).xyz;
+
+
+    V = normalize(-pos);
+
+    gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+	//fColor = vec4( 1.0, 0.0, 1.0, 1.0 );
+}
+
+
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+
+varying vec3 L, N, V;
+uniform vec4 ambientProduct, diffuseProduct, specularProduct;
+uniform float shininess;
+
+void main()
+{
+
+	vec3 R = (2.0 * dot(L, N) * N) - L;
+
+    vec4 diffuse = diffuseProduct * dot(L, N);
+    vec4 ambient = ambientProduct;
+    vec4 specular = specularProduct * pow(max(dot(V, R), 0.0), shininess);
+
+    vec4 fColor = diffuse + specular + ambient;
+    fColor.a = 1.0;
+
+    gl_FragColor = fColor;
+
+}
+
+
+</script>
+
+<script type="text/javascript" src="lib/webgl-utils.js"></script>
+<script type="text/javascript" src="lib/initShaders.js"></script>
+
+<script type="text/javascript" src="lib/MV.js"></script>
+<script type="text/javascript" src="shadedSphere1.js"></script>
+
+<body>
+<div style="text-align: center">
+    <h3>Joe's Sphere Path Follower</h3>
+    <canvas id="gl-canvas" width="512" height="512" style="border: 1px solid black;">
+        Epic fail!
+    </canvas>
+</div>
+
+</body>
+</html>
