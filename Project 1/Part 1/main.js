@@ -120,8 +120,8 @@ function main() {
 
 function transformation_matrix_uniform() {
     //translate to origin (x, y)
-    let current_x = user_translate_x + (svg_center_x * svg_scale_x);
-    let current_y = user_translate_y + (svg_center_y * svg_scale_y);
+    let current_x = (user_translate_x + svg_center_x) * svg_scale_x;
+    let current_y = (user_translate_y + svg_center_y) * svg_scale_y;
     console.log(current_x + " " + current_y);
 
     //translate to webgl origin
@@ -219,6 +219,9 @@ function on_mouse_drag(event) {
     //apply the delta
     delta_x *= 1 / (CANVAS_SIZE * aspect_ratio) * width;
     delta_y *= 1 / (CANVAS_SIZE * aspect_ratio) * height;
+
+    user_translate_x -= delta_x;
+    user_translate_y -= delta_y;
 
     //set previous position
     previous_x = current_x;
