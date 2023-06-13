@@ -2,7 +2,9 @@ let canvas;
 let gl;
 let program;
 
-let sphere_subdivsions = 1;
+let line_subdivisions = 6;
+
+let sphere_subdivisions = 1;
 const MAX_SPHERE_SUB = 5;
 const MIN_SPHERE_SUB = 0;
 
@@ -36,6 +38,33 @@ let modelViewMatrixLoc, projectionMatrixLoc;
 let eye = vec3(0, 0, 5.0);
 let at = vec3(0.0, 0.0, 0.0);
 let up = vec3(0.0, 1.0, 0.0);
+
+// Control vertices for line
+let line_control_points = [
+    vec4(-0.75, -0.5, 0.0, 1.0),
+    vec4(-0.25, 0.5, 0.0, 1.0),
+    vec4(0.25, 0.5, 0.0, 1.0),
+    vec4(0.75, -0.5, 0.0, 1.0)
+];
+
+function chaikin(vertices, iterations) {
+    if (iterations === 0) {
+        return vertices;
+    }
+
+    let newVertices = [];
+
+    for (let i = 0; i < vertices.length - 1; i++) {
+        let v0 = vertices[i];
+        let v1 = vertices[i + 1];
+
+        let p0 = mix(v0, v1, 0.25);
+        let p1 = mix(v0, v1, 0.75);
+
+        newVertices.push(p0, p1);
+    }
+    return chaikin(newVertices, iterations - 1);
+}
 
 function triangle(a, b, c) {
     pointsArray.push(a);
@@ -102,12 +131,13 @@ function init() {
 
     window.addEventListener("keydown", on_key_down);
 
+
     //lighting
     let diffuseProduct = mult(lightDiffuse, materialDiffuse);
     let specularProduct = mult(lightSpecular, materialSpecular);
     let ambientProduct = mult(lightAmbient, materialAmbient);
 
-    tetrahedron(va, vb, vc, vd, sphere_subdivsions);
+    tetrahedron(va, vb, vc, vd, sphere_subdivisions);
 
     //GPU info
     let vBuffer = gl.createBuffer();
@@ -137,15 +167,10 @@ function init() {
     gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"), flatten(lightPosition));
     gl.uniform1f(gl.getUniformLocation(program, "shininess"), materialShininess);
 
-    render();
-}
-
-function render() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    gl.uniform1i(gl.getUniformLocation(program, "isSphere"), 1);
     modelViewMatrix = lookAt(eye, at, up);
-    //projectionMatrix = ortho(left, right, bottom, ytop, near, far);
-
     projectionMatrix = perspective(fovy, 1, near, far);
 
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix));
@@ -154,6 +179,22 @@ function render() {
     for (let i = 0; i < index; i += 3) {
         gl.drawArrays(gl.TRIANGLES, i, 3);
     }
+
+    gl.uniform1i(gl.getUniformLocation(program, "isSphere"), 0);
+    let chaikin_points = chaikin(line_control_points, line_subdivisions)
+
+    let line_vBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, line_vBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(chaikin_points), gl.STATIC_DRAW);
+
+    let line_vPosition = gl.getAttribLocation(program, "vPosition");
+    gl.vertexAttribPointer(line_vPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(line_vPosition);
+
+    modelViewMatrixLoc = gl.getUniformLocation(program, "lineViewMatrix");
+    gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(mat4()));
+
+    gl.drawArrays(gl.LINE_STRIP, 0, chaikin_points.length);
 }
 
 function on_key_down(event) {
@@ -163,20 +204,24 @@ function on_key_down(event) {
         on_sphere_subdivision_change(-1);
     } else if (key === 'e') {
         on_sphere_subdivision_change(1);
+    } else if (key === 'j') {
+
+    } else if (key === 'i') {
+
     }
 }
 
 function on_sphere_subdivision_change(change) {
-    sphere_subdivsions += change;
+    sphere_subdivisions += change;
 
     //clamp?
-    if (sphere_subdivsions < MIN_SPHERE_SUB) {
-        sphere_subdivsions = MIN_SPHERE_SUB;
+    if (sphere_subdivisions < MIN_SPHERE_SUB) {
+        sphere_subdivisions = MIN_SPHERE_SUB;
     }
-    if (sphere_subdivsions > MAX_SPHERE_SUB) {
-        sphere_subdivsions = MAX_SPHERE_SUB;
+    if (sphere_subdivisions > MAX_SPHERE_SUB) {
+        sphere_subdivisions = MAX_SPHERE_SUB;
     }
 
-    console.log(sphere_subdivsions);
+    console.log(sphere_subdivisions);
     init();
 }

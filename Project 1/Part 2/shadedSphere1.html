@@ -8,9 +8,13 @@
 
 attribute vec4 vPosition;
 attribute vec4 vNormal;
+
 uniform vec4 lightPosition;
 uniform mat4 modelViewMatrix;
+uniform mat4 lineViewMatrix;
 uniform mat4 projectionMatrix;
+uniform bool isSphere;
+
 varying vec3 L, N, V;
 
 void main()
@@ -20,8 +24,17 @@ void main()
     N = normalize(modelViewMatrix * vNormal).xyz;
     V = normalize(-pos);
 
-    gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+    if(isSphere)
+    {
+        gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+    }
+    else
+    {
+        gl_Position = lineViewMatrix * vPosition;
+    }
 }
+
+
 
 </script>
 
@@ -32,19 +45,23 @@ precision mediump float;
 varying vec3 L, N, V;
 uniform vec4 ambientProduct, diffuseProduct, specularProduct;
 uniform float shininess;
+uniform bool isSphere;
+
 
 void main()
 {
-	vec3 R = (2.0 * dot(L, N) * N) - L;
+    if(isSphere)
+    {
+    	vec3 R = (2.0 * dot(L, N) * N) - L;
 
-    vec4 diffuse = diffuseProduct * dot(L, N);
-    vec4 ambient = ambientProduct;
-    vec4 specular = specularProduct * pow(max(dot(V, R), 0.0), shininess);
+        vec4 diffuse = diffuseProduct * dot(L, N);
+        vec4 ambient = ambientProduct;
+        vec4 specular = specularProduct * pow(max(dot(V, R), 0.0), shininess);
 
-    vec4 fColor = diffuse + specular + ambient;
-    fColor.a = 1.0;
-
-    gl_FragColor = fColor;
+        vec4 fColor = diffuse + specular + ambient;
+        fColor.a = 1.0;
+        gl_FragColor = fColor;
+    }
 }
 
 </script>
