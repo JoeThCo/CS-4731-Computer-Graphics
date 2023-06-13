@@ -41,6 +41,7 @@ let eye = vec3(0.0, 0.0, 5.0);
 let at = vec3(0.0, 0.0, 0.0);
 let up = vec3(0.0, 1.0, 0.0);
 
+//starting cube vertices
 const initial_vertices = [
     -0.5, -0.5, -0.5,
     0.5, -0.5, -0.5,
@@ -250,6 +251,7 @@ function subdivide_cube(sub_count) {
         const p2 = vertices.slice(v2, v2 + 3);
         const p3 = vertices.slice(v3, v3 + 3);
 
+        //vector from first to second (u) and first to third (v)
         const u = [p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]];
         const v = [p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]];
 
@@ -259,11 +261,13 @@ function subdivide_cube(sub_count) {
             u[0] * v[1] - u[1] * v[0]
         ];
 
+        //normalize
         const length = Math.sqrt(normal[0] ** 2 + normal[1] ** 2 + normal[2] ** 2);
         normal[0] /= length;
         normal[1] /= length;
         normal[2] /= length;
 
+        //push the elements of normal 3 times
         normals.push(...normal, ...normal, ...normal);
     }
 
@@ -299,9 +303,11 @@ function make_sphere(sphere_info) {
 }
 
 function render_sphere(sphere_info) {
+    //make it so we DO move the sphere
     let move_sphere_location = gl.getUniformLocation(program, "is_sphere");
     gl.uniform1i(move_sphere_location, 1);
 
+    //camera and projection
     modelViewMatrix = lookAt(eye, at, up);
     projectionMatrix = perspective(fovy, 1, -1, 1);
 
@@ -330,18 +336,17 @@ function make_chaikin() {
 }
 
 function render_chaikin() {
+    //make it so we dont move the line
     let move_chaikin_location = gl.getUniformLocation(program, "is_sphere");
     gl.uniform1i(move_chaikin_location, 0);
 
-    //let chaikin_position_matrix = rotateX(0);
-    let chaikin_position_matrix = mat4();
-
+    //chaiking info
     let chaikin_location = gl.getUniformLocation(program, "u_chaikin_position_matrix");
-    gl.uniformMatrix4fv(chaikin_location, false, flatten(chaikin_position_matrix))
-
+    gl.uniformMatrix4fv(chaikin_location, false, flatten(mat4()))
     gl.bindBuffer(gl.ARRAY_BUFFER, chaikin_vertex_buffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(line_points), gl.STATIC_DRAW);
 
+    //position info
     gl.vertexAttribPointer(position_attribute_location, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(position_attribute_location);
 
@@ -353,14 +358,15 @@ function update_sphere_position() {
         t += t_speed;
 
         if (t < 1) {
+            //get the index based on the t and how far into the who animation we are
             const t_index = Math.floor(t * (line_points.length - 1));
             const progress = (t * (line_points.length - 1)) % 1;
 
+            //current points
             const start = line_points[t_index];
             const end = line_points[t_index + 1];
 
             gl.uniform1f(progress_location, progress);
-
             gl.uniform3fv(line_start_location, [start[0], start[1], start[2]]);
             gl.uniform3fv(line_end_location, [end[0], end[1], end[2]]);
         } else {
