@@ -3,13 +3,15 @@ let gl;
 let program;
 
 let line_points = [];
-let line_subdivisions = 1;
+
 const MIN_LINE_SUB = 0;
 const MAX_LINE_SUB = 8;
+let line_subdivisions = MIN_LINE_SUB;
+
+const MIN_SPHERE_SUB = 1;
+const MAX_SPHERE_SUB = 5;
 
 let sphere_subdivisions = 1;
-const MIN_SPHERE_SUB = 0;
-const MAX_SPHERE_SUB = 5;
 
 let index = 0;
 let t = 0;
@@ -44,7 +46,7 @@ let eye = vec3(0, 0, 2.5);
 let at = vec3(0.0, 0.0, 0.0);
 let up = vec3(0.0, 1.0, 0.0);
 
-let is_playing = true;
+let is_playing = false;
 
 const SIZE = 1.0;
 const HALF_SIZE = SIZE * .5;
@@ -175,31 +177,31 @@ function render() {
 }
 
 function update_sphere_position() {
-    if (is_playing) {
-        if (t < 1) {
-            //the current index based of t
-            const t_index = Math.floor(t * (line_points.length - 1));
+    if (t < 1) {
+        //the current index based of t
+        const t_index = Math.floor(t * (line_points.length - 1));
 
-            //how far into the points we are
-            const progress_percent = (t * (line_points.length - 1)) % 1;
+        //how far into the points we are
+        const progress_percent = (t * (line_points.length - 1)) % 1;
 
-            //get the current and next point to lerp between
-            const start = line_points[t_index];
-            const end = line_points[t_index + 1];
+        //get the current and next point to lerp between
+        const start = line_points[t_index];
+        const end = line_points[t_index + 1];
 
-            gl.uniform1f(gl.getUniformLocation(program, "u_progress"), progress_percent);
-            gl.uniform3fv(gl.getUniformLocation(program, "u_line_start"), [start[0], start[1], start[2]]);
-            gl.uniform3fv(gl.getUniformLocation(program, "u_line_end"), [end[0], end[1], end[2]]);
+        gl.uniform1f(gl.getUniformLocation(program, "u_progress"), progress_percent);
+        gl.uniform3fv(gl.getUniformLocation(program, "u_line_start"), [start[0], start[1], start[2]]);
+        gl.uniform3fv(gl.getUniformLocation(program, "u_line_end"), [end[0], end[1], end[2]]);
 
-            t += t_speed;
+        if (is_playing) {
+            t += t_speed / line_points.length;
+        }
 
-            //limit to 0 and 1, rid of floating point issues according to internet
-            if (t > 1) {
-                t = 0;
-            }
-        } else {
+        //limit to 0 and 1, rid of floating point issues according to internet
+        if (t > 1) {
             t = 0;
         }
+    } else {
+        t = 0;
     }
 }
 
@@ -286,8 +288,6 @@ function on_key_down(event) {
         on_line_subdivision_change(1);
     } else if (key === 'a') {
         is_playing = true;
-    } else if (key === 's') {
-        is_playing = false;
     }
 }
 
