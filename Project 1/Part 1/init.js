@@ -138,7 +138,7 @@ function transformation_matrix_uniform() {
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_scale"), false, flatten(scale_matrix));
 
     //back to og spot
-    let to_point_matrix = translate((user_translate_x - svg_center_x), (user_translate_y - svg_center_y), 0);
+    let to_point_matrix = translate(user_translate_x - svg_center_x, user_translate_y - svg_center_y, 0);
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_to_point"), false, flatten(to_point_matrix));
 }
 
