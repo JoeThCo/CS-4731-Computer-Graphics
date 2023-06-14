@@ -18,7 +18,7 @@ let t_speed = .005;
 let pointsArray = [];
 let normalsArray = [];
 
-let fovy = 90;
+let fovy = 100;
 let near = -1;
 let far = 1;
 
@@ -46,12 +46,29 @@ let up = vec3(0.0, 1.0, 0.0);
 
 let is_playing = true;
 
-let SIZE = 1.5;
+const SIZE = 1.0;
+const HALF_SIZE = SIZE * .5;
+
 // Control vertices for line
 let line_control_points = [
-    vec2(-SIZE, -SIZE),
-    vec2(-SIZE, SIZE),
-    vec2(SIZE, SIZE),
+    vec2(SIZE + HALF_SIZE, HALF_SIZE),
+    vec2(HALF_SIZE, HALF_SIZE),
+    vec2(HALF_SIZE, HALF_SIZE + SIZE),
+
+    vec2(HALF_SIZE - SIZE, HALF_SIZE + SIZE),
+    vec2(HALF_SIZE - SIZE, HALF_SIZE),
+    vec2(HALF_SIZE - SIZE * 2, HALF_SIZE),
+
+    vec2(HALF_SIZE - SIZE * 2, -HALF_SIZE),
+    vec2(HALF_SIZE - SIZE, -HALF_SIZE),
+    vec2(HALF_SIZE - SIZE, -SIZE + -HALF_SIZE),
+
+    vec2(HALF_SIZE, -SIZE + -HALF_SIZE),
+    vec2(HALF_SIZE, -HALF_SIZE),
+    vec2(HALF_SIZE + SIZE, -HALF_SIZE),
+
+    vec2(SIZE + HALF_SIZE, HALF_SIZE),
+    vec2(SIZE + HALF_SIZE * .25, HALF_SIZE),
 ];
 
 // Control vertices for line
@@ -133,10 +150,9 @@ function init() {
     program = initShaders(gl, "vertex-shader", "fragment-shader");
     gl.useProgram(program);
 
-    index = 0;
-
     window.addEventListener("keydown", on_key_down);
 
+    index = 0;
     tetrahedron(va, vb, vc, vd, sphere_subdivisions);
     chaikin_init();
 
@@ -146,10 +162,12 @@ function init() {
 function render() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    //sphere section, isSphere === 1
     gl.uniform1i(gl.getUniformLocation(program, "isSphere"), 1);
     update_sphere_position();
     render_sphere();
 
+    //line section, isSphere === 0
     gl.uniform1i(gl.getUniformLocation(program, "isSphere"), 0);
     render_chaikin();
 
@@ -159,18 +177,26 @@ function render() {
 function update_sphere_position() {
     if (is_playing) {
         if (t < 1) {
+            //the current index based of t
             const t_index = Math.floor(t * (line_points.length - 1));
-            const progress = (t * (line_points.length - 1)) % 1;
 
+            //how far into the points we are
+            const progress_percent = (t * (line_points.length - 1)) % 1;
+
+            //get the current and next point to lerp between
             const start = line_points[t_index];
             const end = line_points[t_index + 1];
 
-            gl.uniform1f(gl.getUniformLocation(program, "u_progress"), progress);
-
+            gl.uniform1f(gl.getUniformLocation(program, "u_progress"), progress_percent);
             gl.uniform3fv(gl.getUniformLocation(program, "u_line_start"), [start[0], start[1], start[2]]);
             gl.uniform3fv(gl.getUniformLocation(program, "u_line_end"), [end[0], end[1], end[2]]);
 
             t += t_speed;
+
+            //limit to 0 and 1, rid of floating point issues according to internet
+            if (t > 1) {
+                t = 0;
+            }
         } else {
             t = 0;
         }
@@ -178,12 +204,6 @@ function update_sphere_position() {
 }
 
 function render_sphere() {
-    //lighting
-    let diffuseProduct = mult(lightDiffuse, materialDiffuse);
-    let specularProduct = mult(lightSpecular, materialSpecular);
-    let ambientProduct = mult(lightAmbient, materialAmbient);
-
-
     //GPU info
     let vBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
@@ -201,9 +221,10 @@ function render_sphere() {
     gl.vertexAttribPointer(vNormalPosition, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vNormalPosition);
 
-    //model info
-    modelViewMatrixLoc = gl.getUniformLocation(program, "modelViewMatrix");
-    projectionMatrixLoc = gl.getUniformLocation(program, "projectionMatrix");
+    //lighting
+    let diffuseProduct = mult(lightDiffuse, materialDiffuse);
+    let specularProduct = mult(lightSpecular, materialSpecular);
+    let ambientProduct = mult(lightAmbient, materialAmbient);
 
     //push lighting
     gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"), flatten(diffuseProduct));
@@ -212,6 +233,11 @@ function render_sphere() {
     gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"), flatten(lightPosition));
     gl.uniform1f(gl.getUniformLocation(program, "shininess"), materialShininess);
 
+    //model info
+    modelViewMatrixLoc = gl.getUniformLocation(program, "modelViewMatrix");
+    projectionMatrixLoc = gl.getUniformLocation(program, "projectionMatrix");
+
+    //set up
     modelViewMatrix = lookAt(eye, at, up);
     projectionMatrix = perspective(fovy, 1, near, far);
 
@@ -228,25 +254,28 @@ function chaikin_init() {
 }
 
 function render_chaikin() {
+    //line info buffer
     let line_vBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, line_vBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(line_points), gl.STATIC_DRAW);
 
+    //line position buffer
     let line_vPosition = gl.getAttribLocation(program, "vPosition");
     gl.vertexAttribPointer(line_vPosition, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(line_vPosition);
 
+    //keep the line cented around middle
     let chaikin_position_matrix = mat4();
 
     modelViewMatrixLoc = gl.getUniformLocation(program, "lineViewMatrix");
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(chaikin_position_matrix));
 
+    //render line
     gl.drawArrays(gl.LINE_STRIP, 0, line_points.length);
 }
 
 function on_key_down(event) {
     const key = event.key;
-
     if (key === 'q') {
         on_sphere_subdivision_change(-1);
     } else if (key === 'e') {
@@ -255,6 +284,10 @@ function on_key_down(event) {
         on_line_subdivision_change(-1);
     } else if (key === 'i') {
         on_line_subdivision_change(1);
+    } else if (key === 'a') {
+        is_playing = true;
+    } else if (key === 's') {
+        is_playing = false;
     }
 }
 
