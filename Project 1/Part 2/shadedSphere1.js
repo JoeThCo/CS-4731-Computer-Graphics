@@ -10,12 +10,11 @@ let line_subdivisions = MIN_LINE_SUB;
 
 const MIN_SPHERE_SUB = 1;
 const MAX_SPHERE_SUB = 5;
-
 let sphere_subdivisions = 1;
 
 let index = 0;
 let t = 0;
-let t_speed = .005;
+let t_speed = .01;
 
 let pointsArray = [];
 let normalsArray = [];
@@ -99,13 +98,11 @@ function triangle(a, b, c) {
     pointsArray.push(c);
 
     // normals are vectors
-
     normalsArray.push(a[0], a[1], a[2], 0.0);
     normalsArray.push(b[0], b[1], b[2], 0.0);
     normalsArray.push(c[0], c[1], c[2], 0.0);
 
     index += 3;
-
 }
 
 function divideTriangle(a, b, c, count) {
@@ -152,11 +149,16 @@ function init() {
     program = initShaders(gl, "vertex-shader", "fragment-shader");
     gl.useProgram(program);
 
+    gl.enable(gl.CULL_FACE);
+    gl.cullFace(gl.BACK);
+
     window.addEventListener("keydown", on_key_down);
 
     index = 0;
     tetrahedron(va, vb, vc, vd, sphere_subdivisions);
-    chaikin_init();
+    line_points = chaikin(line_control_points, line_subdivisions)
+
+    console.log("Init!");
 
     render();
 }
@@ -249,10 +251,6 @@ function render_sphere() {
     for (let i = 0; i < index; i += 3) {
         gl.drawArrays(gl.TRIANGLES, i, 3);
     }
-}
-
-function chaikin_init() {
-    line_points = chaikin(line_control_points, line_subdivisions)
 }
 
 function render_chaikin() {
