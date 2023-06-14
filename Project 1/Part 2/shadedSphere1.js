@@ -134,18 +134,17 @@ function init() {
     gl.useProgram(program);
 
     index = 0;
-    pointsArray = [];
-    normalsArray = [];
 
     window.addEventListener("keydown", on_key_down);
+
+    tetrahedron(va, vb, vc, vd, sphere_subdivisions);
+    chaikin_init();
 
     render();
 }
 
 function render() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    chaikin_init();
 
     gl.uniform1i(gl.getUniformLocation(program, "isSphere"), 1);
     update_sphere_position();
@@ -184,7 +183,6 @@ function render_sphere() {
     let specularProduct = mult(lightSpecular, materialSpecular);
     let ambientProduct = mult(lightAmbient, materialAmbient);
 
-    tetrahedron(va, vb, vc, vd, sphere_subdivisions);
 
     //GPU info
     let vBuffer = gl.createBuffer();
@@ -226,7 +224,6 @@ function render_sphere() {
 }
 
 function chaikin_init() {
-    line_points = [];
     line_points = chaikin(line_control_points, line_subdivisions)
 }
 
