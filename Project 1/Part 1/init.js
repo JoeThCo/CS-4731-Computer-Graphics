@@ -6,7 +6,6 @@ let points = [];
 let colors = [];
 
 let width, height = 0;
-let model_matrix;
 
 //image info
 let svg_scale_x = 1, svg_scale_y = 1;
@@ -113,7 +112,7 @@ function init() {
             console.log("SVG Scale:" + svg_scale_x + "," + svg_scale_y);
             console.log("SVG Center:" + svg_center_x + "," + svg_center_y);
 
-            user_translate_x = svg_scale_x;
+            user_translate_x = svg_center_x;
             user_translate_y = svg_scale_y;
 
             render();
@@ -125,11 +124,9 @@ function init() {
 
 function transformation_matrix_uniform() {
     //translate to origin (x, y)
-    //console.log(user_translate_x + "," + user_translate_y);
 
     //translate to webgl origin
     let origin_matrix = translate(-user_translate_x, -user_translate_y, 0);
-    //let origin_matrix = translate(-3, -3, 0);
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_to_origin"), false, flatten(origin_matrix));
 
     //rotate
@@ -142,7 +139,6 @@ function transformation_matrix_uniform() {
 
     //Could not get to work properly
     let to_point_matrix = translate(user_translate_x - svg_center_x, user_translate_y - svg_center_y, 0);
-    //let to_point_matrix = translate(0, 0, 0);
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_to_point"), false, flatten(to_point_matrix));
 }
 
@@ -242,11 +238,9 @@ function on_rotate(change) {
 
 function reset_user_input() {
     user_scale = 1;
-    user_translate_x = 0;
-    user_translate_y = 0;
+    user_translate_x = svg_center_x;
+    user_translate_y = svg_center_y;
     user_rotate = 0;
-
-    model_matrix = mat4();
 }
 
 function point_size_uniform() {
