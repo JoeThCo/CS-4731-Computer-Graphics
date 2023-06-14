@@ -23,7 +23,7 @@
         void main()
         {
             mat4 mvp_matrix = u_view_matrix * u_projection_matrix;
-            mat4 transformation_matrix = u_to_origin * (u_rotate * u_scale);
+            mat4 transformation_matrix = ((u_rotate * u_scale) * u_to_origin) * u_to_point;
 
             gl_Position = mvp_matrix * transformation_matrix * a_position;
 
@@ -40,6 +40,7 @@
         {
             gl_FragColor = v_fColor;
         }
+
     </script>
 
     <script src="lib/webgl-utils.js"></script>
@@ -47,16 +48,16 @@
     <script src="lib/MV.js"></script>
     <script src="lib/cs4731pjt1.js"></script>
 
-    <script src="main.js"></script>
+    <script src="init.js"></script>
 
 </head>
 
-<body onload="main()">
+<body onload="init()">
 
 <div style="text-align: center">
-    <h1 id='htitle'>Joe Colley's Graphics Editor</h1>
+    <h1 id='htitle'>Joe's Graphics Editor</h1>
 
-    <canvas id="webgl" width="500" height="500" style="border: 1px solid black;">
+    <canvas id="webgl" width="500" height="500" style="border: 3px solid black;">
         Please use a browser that supports the "canvas" tag.
     </canvas>
 
