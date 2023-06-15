@@ -1,9 +1,12 @@
+let gl;
+let program;
+
 function main() {
     // Retrieve <canvas> element
     let canvas = document.getElementById('webgl');
 
     // Get the rendering context for WebGL
-    let gl = WebGLUtils.setupWebGL(canvas, undefined);
+    gl = WebGLUtils.setupWebGL(canvas, undefined);
 
     //Check that the return value is not null.
     if (!gl) {
@@ -11,14 +14,11 @@ function main() {
         return;
     }
 
-    // Set viewport
     gl.viewport(0, 0, canvas.width, canvas.height);
-
-    // Set clear color
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
     // Initialize shaders
-    let program = initShaders(gl, "vshader", "fshader");
+    program = initShaders(gl, "vshader", "fshader");
     gl.useProgram(program);
 
     // Get the stop sign
