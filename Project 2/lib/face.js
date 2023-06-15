@@ -18,14 +18,14 @@ class Face {
                 this.getFloatVec(faceVertices[i]),
                 this.getFloatVec(faceVertices[i + 1])
             );
-            if(faceNormals.length > 0) {
+            if (faceNormals.length > 0) {
                 this.faceNormals.push(
                     this.getFloatVec(faceNormals[0]),
                     this.getFloatVec(faceNormals[i]),
                     this.getFloatVec(faceNormals[i + 1])
                 );
             }
-            if(faceTexCoords.length > 0) {
+            if (faceTexCoords.length > 0) {
                 this.faceTexCoords.push(
                     this.getFloatVec(faceTexCoords[0]),
                     this.getFloatVec(faceTexCoords[i]),
@@ -46,28 +46,25 @@ class Face {
      */
     getFloatVec(vec) {
         let i = vec.length;
-        if(i === 2) {
+        if (i === 2) {
             return vec2(
                 parseFloat(vec[0]),
                 parseFloat(vec[1])
             );
-        }
-        else if(i === 3) {
+        } else if (i === 3) {
             return vec3(
                 parseFloat(vec[0]),
                 parseFloat(vec[1]),
                 parseFloat(vec[2])
             );
-        }
-        else if(i === 4) {
+        } else if (i === 4) {
             return vec4(
                 parseFloat(vec[0]),
                 parseFloat(vec[1]),
                 parseFloat(vec[2]),
                 parseFloat(vec[3])
             );
-        }
-        else {
+        } else {
             return vec4(0.0, 0.0, 0.0, 1.0);
         }
     }

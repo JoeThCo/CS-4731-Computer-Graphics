@@ -2,7 +2,6 @@
  * A model used in our scene, as determined from an OBJ and corresponding MTL file.
  */
 class Model {
-
     textured = false;           // Whether this model is textured
     imagePath = null;           // The URL of the texture image, if one is used
 
@@ -46,12 +45,11 @@ class Model {
      * @param parseFile     The parsing function to use with this file.
      */
     loadFile(path, parseFile) {
-
         // Asynchronously load file
         let req = new XMLHttpRequest(); // See [1]
-        req.overrideMimeType( "text/plain; charset=x-user-defined" );   // Ensure correct MIME type (see [3])
+        req.overrideMimeType("text/plain; charset=x-user-defined");   // Ensure correct MIME type (see [3])
         req.open('GET', path);
-        req.onreadystatechange = function() {
+        req.onreadystatechange = function () {
             if (req.readyState === 4 && req.status === 200) {
                 let file = req.responseText;
 
@@ -63,7 +61,6 @@ class Model {
         }
         req.send(null);
     }
-
 
     /**
      * Parsing function for the material (MTL) file.
@@ -84,16 +81,13 @@ class Model {
 
             if (line.startsWith("newmtl")) {        // Hit a new material
                 currMaterial = line.substring(line.indexOf(' ') + 1);   // See [4]
-            }
-            else if (line.startsWith("Kd")) {       // Material diffuse definition
+            } else if (line.startsWith("Kd")) {       // Material diffuse definition
                 let values = line.match(/[+-]?([0-9]+[.])?[0-9]+/g);
                 this.diffuseMap.set(currMaterial, [parseFloat(values[0]), parseFloat(values[1]), parseFloat(values[2]), 1.0]);
-            }
-            else if (line.startsWith("Ks")) {       // Material specular definition
+            } else if (line.startsWith("Ks")) {       // Material specular definition
                 let values = line.match(/[+-]?([0-9]+[.])?[0-9]+/g);
                 this.specularMap.set(currMaterial, [parseFloat(values[0]), parseFloat(values[1]), parseFloat(values[2]), 1.0]);
-            }
-            else if (line.startsWith("map_Kd")) {   // Texture file
+            } else if (line.startsWith("map_Kd")) {   // Texture file
 
                 // Get the path of the texture file
                 // Note that any model will have at most one texture file
@@ -126,30 +120,26 @@ class Model {
         let normals = [];           // List of normal definitions from OBJ
         let uvs = [];               // List of UV definitions (texture coordinates) from OBJ
         let currMaterial = null;    // Current material in use
-        
+
         for (let currLine = 0; currLine < objLines.length; currLine++) {
             let line = objLines[currLine];
 
             if (line.startsWith("vn")) {            // Vertex normal definition
                 let coords = line.match(/[+-]?([0-9]+[.])?[0-9]+/g);
                 normals.push(vec4(coords[0], coords[1], coords[2], 0.0));
-            } 
-            else if (line.startsWith("vt")) {       // Vertex UV definition (texture coordinate)
+            } else if (line.startsWith("vt")) {       // Vertex UV definition (texture coordinate)
                 let coords = line.match(/[+-]?([0-9]+[.])?[0-9]+/g);
                 uvs.push(vec2(coords[0], 1.0 - coords[1]))
-            }
-            else if (line.charAt(0) === 'v') {      // Vertex position definition
+            } else if (line.charAt(0) === 'v') {      // Vertex position definition
                 let coords = line.match(/[+-]?([0-9]+[.])?[0-9]+/g);
                 vertices.push(vec4(coords[0], coords[1], coords[2], 1.0));
-            }
-            else if (line.startsWith("usemtl")) {   // Material use definition
+            } else if (line.startsWith("usemtl")) {   // Material use definition
                 currMaterial = line.substring(line.indexOf(' ') + 1);
-            }
-            else if (line.charAt(0) === 'f') {      // Face definition
+            } else if (line.charAt(0) === 'f') {      // Face definition
                 this.processFace(line, vertices, normals, uvs, currMaterial);
             }
         }
-        
+
         this.objParsed = true;
 
         console.log("Faces:");
@@ -180,8 +170,7 @@ class Model {
             indices.forEach(value => {
                 faceVerts.push(vertices[parseInt(value) - 1]);
             });
-        }
-        else if (types === 1) {     // v and vt provided
+        } else if (types === 1) {     // v and vt provided
             indices.forEach(value => {
                 let firstSlashIndex = value.indexOf('/');
 
@@ -191,8 +180,7 @@ class Model {
                 // Texture coordinates
                 faceTexs.push(this.getVertex(value, firstSlashIndex + 1, -1, uvs));
             });
-        }
-        else if (types === 2) {     // v, maybe vt, and vn provided
+        } else if (types === 2) {     // v, maybe vt, and vn provided
 
             indices.forEach(value => {
                 let firstSlashIndex = value.indexOf('/');
@@ -202,8 +190,7 @@ class Model {
                 faceVerts.push(this.getVertex(value, 0, firstSlashIndex, vertices));
 
                 // Texture coordinates, if provided
-                if(secondSlashIndex > (firstSlashIndex + 1))
-                {
+                if (secondSlashIndex > (firstSlashIndex + 1)) {
                     faceTexs.push(this.getVertex(value, firstSlashIndex + 1, secondSlashIndex, uvs));
                 }
 
@@ -231,18 +218,15 @@ class Model {
      */
     getVertex(value, start, end, vertArray) {
         let objIndex;
-        if(end >= 0) {
+        if (end >= 0) {
             objIndex = value.substring(start, end);
-        }
-        else {
+        } else {
             objIndex = value.substring(start);
         }
         let index = parseInt(objIndex) - 1;
         return vertArray[index];
     }
 }
-
-
 
 /*
  * ==============================
