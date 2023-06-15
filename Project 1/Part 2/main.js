@@ -68,11 +68,11 @@ let line_control_points = [
     vec2(HALF_SIZE, -HALF_SIZE),
     vec2(HALF_SIZE + SIZE, -HALF_SIZE),
 
+    //couldn't get it to perfectly line up
     vec2(SIZE + HALF_SIZE, HALF_SIZE),
     vec2(SIZE + HALF_SIZE * .25, HALF_SIZE),
 ];
 
-// Control vertices for line
 function chaikin(vertices, iterations) {
     if (iterations === 0) {
         return vertices;
@@ -92,6 +92,7 @@ function chaikin(vertices, iterations) {
     return chaikin(newVertices, iterations - 1);
 }
 
+//Sets the triangle vertices and normals
 function triangle(a, b, c) {
     pointsArray.push(a);
     pointsArray.push(b);
@@ -105,6 +106,7 @@ function triangle(a, b, c) {
     index += 3;
 }
 
+//recursively creates more triangles count times
 function divideTriangle(a, b, c, count) {
     if (count > 0) {
         let ab = mix(a, b, 0.5);
@@ -124,6 +126,7 @@ function divideTriangle(a, b, c, count) {
     }
 }
 
+//makes the sphere with a little bit of magic
 function tetrahedron(a, b, c, d, n) {
     divideTriangle(a, b, c, n);
     divideTriangle(d, c, b, n);
@@ -163,6 +166,7 @@ function init() {
     render();
 }
 
+//main render function
 function render() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -178,6 +182,7 @@ function render() {
     requestAnimationFrame(render);
 }
 
+//moves the sphere in space
 function update_sphere_position() {
     if (t < 1) {
         //the current index based of t
@@ -207,6 +212,7 @@ function update_sphere_position() {
     }
 }
 
+//renders the sphere
 function render_sphere() {
     //GPU info
     let vBuffer = gl.createBuffer();
@@ -253,6 +259,7 @@ function render_sphere() {
     }
 }
 
+//renders the line
 function render_chaikin() {
     //line info buffer
     let line_vBuffer = gl.createBuffer();
@@ -274,6 +281,7 @@ function render_chaikin() {
     gl.drawArrays(gl.LINE_STRIP, 0, line_points.length);
 }
 
+//all key pressed DOWN events
 function on_key_down(event) {
     const key = event.key;
     if (key === 'q') {
@@ -289,6 +297,7 @@ function on_key_down(event) {
     }
 }
 
+//update the sphere subs
 function on_sphere_subdivision_change(change) {
     sphere_subdivisions += change;
 
@@ -303,6 +312,7 @@ function on_sphere_subdivision_change(change) {
     init();
 }
 
+//update the line subs
 function on_line_subdivision_change(change) {
     line_subdivisions += change;
 
