@@ -7,6 +7,7 @@ let points = [];
 let colors = [];
 
 let width, height = 0;
+let model_matrix;
 
 //image info
 let svg_scale_x = 1, svg_scale_y = 1;
@@ -118,7 +119,7 @@ function init() {
 }
 
 function transformation_matrix_uniform() {
-    let model_matrix = mat4();
+    model_matrix = mat4();
 
     //to origin
     let to_origin_matrix = translate(-user_translate_x, -user_translate_y, 0);
@@ -238,6 +239,8 @@ function reset_user_input() {
     user_translate_x = 0;
     user_translate_y = 0;
     user_rotate = 0;
+
+    model_matrix = mat4();
 }
 
 function point_size_uniform() {
