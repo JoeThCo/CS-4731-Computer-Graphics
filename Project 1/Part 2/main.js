@@ -1,3 +1,4 @@
+// Done by Joe Colley E Term 23
 let canvas;
 let gl;
 let program;
