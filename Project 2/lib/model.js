@@ -12,7 +12,6 @@ class Model {
 
     diffuseMap = new Map();     // A map of material name to corresponding diffuse color
     specularMap = new Map();    // A map of material name to corresponding specular color
-
     constructor(objPath, mtlPath) {
         // Load and parse the OBJ file
         this.loadFile(objPath, this.parseObjFile.bind(this));   // Binding necessary to keep object scope (see [2])
@@ -97,12 +96,6 @@ class Model {
         }
 
         this.mtlParsed = true;
-
-        console.log("Diffuse map:");
-        console.log(this.diffuseMap);
-
-        console.log("Specular map:");
-        console.log(this.specularMap);
     }
 
     /**
@@ -139,9 +132,6 @@ class Model {
         }
 
         this.objParsed = true;
-
-        console.log("Faces:");
-        console.log(this.faces);
     }
 
 
