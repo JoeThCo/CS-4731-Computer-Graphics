@@ -10,7 +10,6 @@ function initShaders(gl, vertexShaderId, fragmentShaderId) {
         alert("Unable to load vertex shader " + vertexShaderId);
         return -1;
     } else {
-        console.log(vertElem);
         vertShdr = gl.createShader(gl.VERTEX_SHADER);
         gl.shaderSource(vertShdr, vertElem.text);
         gl.compileShader(vertShdr);

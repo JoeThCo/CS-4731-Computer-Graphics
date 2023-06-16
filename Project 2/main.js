@@ -1,6 +1,8 @@
 let gl;
 let program;
 
+
+
 function main() {
     // Retrieve <canvas> element
     let canvas = document.getElementById('webgl');
@@ -26,7 +28,55 @@ function main() {
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/stopsign.obj",
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/stopsign.mtl");
 
-    // Get the lamp
+    loadModel(stopSign);
+}
+
+function render() {
+
+}
+
+function loadModel(model) {
+    waitForLoadedModel(model).then(
+        function (value) {
+            console.log("Model Loaded!");
+            displayModel(model);
+        },
+        function (reason) {
+            console.log("Model Failed to Load!");
+        }
+    )
+}
+
+function displayModel(model) {
+    for (let i = 0; i < model.faces.length; i++) {
+        let c_face = model.faces[i];
+
+        for (let j = 0; j < c_face.faceVertices.length; j++) {
+            let c_faceVert = c_face.faceVertices[j];
+            console.log(c_faceVert);
+        }
+    }
+}
+
+function checkIsLoaded(model) {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            resolve(model.objParsed);
+        }, 1500)
+    });
+}
+
+async function waitForLoadedModel(model) {
+    while (true) {
+        if (await checkIsLoaded(model)) {
+            break;
+        }
+    }
+}
+
+//other objs
+/*
+// Get the lamp
     let lamp = new Model(
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/lamp.obj",
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/lamp.mtl");
@@ -45,4 +95,4 @@ function main() {
     let bunny = new Model(
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/bunny.obj",
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/bunny.mtl");
-}
+ */

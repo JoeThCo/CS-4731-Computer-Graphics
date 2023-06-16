@@ -53,8 +53,6 @@ class Model {
             if (req.readyState === 4 && req.status === 200) {
                 let file = req.responseText;
 
-                console.log(path);
-
                 // Parse the file
                 parseFile(file);
             }
