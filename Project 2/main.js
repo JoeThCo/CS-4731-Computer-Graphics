@@ -127,10 +127,13 @@ function main() {
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/street.obj",
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/street.mtl");
 
-    loadModel(street);
+    //leave it in this order
+    //else it doesnt it load them all
     loadModel(stopSign);
+    loadModel(street);
     loadModel(lamp);
     loadModel(car);
+    //loadModel(bunny);
 
     render();
 }
@@ -245,7 +248,5 @@ async function waitForLoadedModel(model) {
 //other objs
 /*
     // Get the bunny (you will not need this one until Part II)
-    let bunny = new Model(
-        "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/bunny.obj",
-        "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/bunny.mtl");
+
  */
