@@ -1,3 +1,4 @@
+//webgl "stuff"
 let gl;
 let program;
 
@@ -9,17 +10,38 @@ const zNear = 0.1;
 const zFar = 25;
 const fovy = 75;
 
+//uniform locations
 let projectionMatrixUniformLoc;
 let viewMatrixUniformLoc;
 let worldMatrixUniformLoc
 
+//attribute locations
 let positionAttributeLoc;
 let normalAttributeLoc;
 
+//all object info
+let object_count = 0;
 let combined_positions = [];
 let combined_normals = [];
 let object_lengths = [];
 
+//phong lighting
+let lightPosition = vec4(0.0, 0.0, 20.0, 1.0);
+let lightAmbient;
+let lightDiffuse;
+let lightSpecular;
+
+const ONE = vec4(1.0, 1.0, 1.0, 1.0);
+const HALF = vec4(0.5, 0.5, 0.5, 1.0);
+const ZERO = vec4(0.0, 0.0, 0.0, 1.0);
+
+//material info
+let materialAmbient = vec4(0.75, 0.75, 0.75, 1.0);
+let materialDiffuse = vec4(1.0, 1.0, 0.5, 1.0);
+let materialSpecular = vec4(1.0, 1.0, 1.0, 1.0);
+let materialShininess = 1.0;
+
+//test info
 const triangle_positions = [
     // Vertex 1
     -0.5, 0.5, 0.0,
@@ -36,7 +58,6 @@ const triangle_normals = [
     // Vertex 3
     0.0, 0.0, 1.0
 ];
-
 const square_positions = [
     // Vertex 1
     -0.5, 0.5, 0.0,
@@ -58,7 +79,7 @@ const square_normals = [
     0.0, 0.0, 1.0
 ];
 
-let object_count = 0;
+//debug flag
 let want_test_shapes = false;
 
 function main() {
@@ -81,6 +102,20 @@ function main() {
     program = initShaders(gl, "vshader", "fshader");
     gl.useProgram(program);
 
+    lightAmbient = ONE;
+    lightDiffuse = ONE;
+    lightSpecular = ONE;
+
+    let diffuseProduct = mult(lightDiffuse, materialDiffuse);
+    let specularProduct = mult(lightSpecular, materialSpecular);
+    let ambientProduct = mult(lightAmbient, materialAmbient);
+
+    gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"), flatten(diffuseProduct));
+    gl.uniform4fv(gl.getUniformLocation(program, "specularProduct"), flatten(specularProduct));
+    gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"), flatten(ambientProduct));
+    gl.uniform4fv(gl.getUniformLocation(program, "u_light_position"), flatten(lightPosition));
+    gl.uniform1f(gl.getUniformLocation(program, "shininess"), materialShininess);
+
     //get attribute locations
     positionAttributeLoc = gl.getAttribLocation(program, "a_position");
     normalAttributeLoc = gl.getAttribLocation(program, "a_normal");
@@ -95,21 +130,29 @@ function main() {
     worldMatrixUniformLoc = gl.getUniformLocation(program, "u_world_matrix");
 
     if (want_test_shapes) {
-        //test triangle
-        combined_positions.push(...triangle_positions);
-        combined_normals.push(...triangle_normals);
-        object_lengths.push(triangle_positions.length);
-        object_count++;
-
-        //test square
-        combined_positions.push(...square_positions);
-        combined_normals.push(...square_normals);
-        object_lengths.push(square_positions.length);
-        object_count++;
+        test_shapes();
     }
 
     make_buffers();
+    load_all_models();
+    render();
+}
 
+function test_shapes() {
+    //test triangle
+    combined_positions.push(...triangle_positions);
+    combined_normals.push(...triangle_normals);
+    object_lengths.push(triangle_positions.length);
+    object_count++;
+
+    //test square
+    combined_positions.push(...square_positions);
+    combined_normals.push(...square_normals);
+    object_lengths.push(square_positions.length);
+    object_count++;
+}
+
+function load_all_models() {
     // Get the stop sign
     let stopSign = new Model(
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/stopsign.obj",
@@ -134,8 +177,6 @@ function main() {
     loadModel(lamp);
     loadModel(car);
     //loadModel(bunny);
-
-    render();
 }
 
 function make_buffers() {

@@ -4,38 +4,47 @@
     <meta charset="UTF-8"/>
     <title>Joe Colley's Final Project</title>
     <script id="vshader" type="x-shader/x-vertex">
-
     attribute vec4 a_position;
-    attribute vec3 a_normal;
 
+    uniform vec4 u_light_position;
     uniform mat4 u_projection_matrix;
     uniform mat4 u_view_matrix;
     uniform mat4 u_world_matrix;
 
-    varying vec3 v_normal;
+    varying vec3 L, N, V;
 
     void main()
     {
-        gl_Position = u_projection_matrix * u_view_matrix * u_world_matrix * a_position;
-        v_normal = mat3(u_world_matrix) * a_normal;
+        mat4 mvp_matrix = u_projection_matrix * u_view_matrix * u_world_matrix;
+        vec3 pos = (mvp_matrix * a_position).xyz;
+
+        L = normalize(u_light_position.xyz - pos);
+        N = normalize(mvp_matrix * a_position).xyz;
+        V = normalize(-pos);
+
+        gl_Position = mvp_matrix * a_position;
     }
-
-
     </script>
 
     <script id="fshader" type="x-shader/x-fragment">
     precision mediump float;
 
-    varying vec3 v_normal;
-
-    uniform vec4 u_diffuse;
-    uniform vec3 u_lightDirection;
+    varying vec3 L, N, V;
+    uniform vec4 ambientProduct, diffuseProduct, specularProduct;
+    uniform float shininess;
 
     void main()
     {
-        vec3 normal = normalize(v_normal);
-        float fakeLight = dot(u_lightDirection, normal) * .5 + .5;
-        gl_FragColor = vec4(u_diffuse.rgb * fakeLight, u_diffuse.a);
+	    vec3 R = (2.0 * dot(L, N) * N) - L;
+
+        vec4 diffuse = diffuseProduct * dot(L, N);
+        vec4 ambient = ambientProduct;
+        vec4 specular = specularProduct * pow(max(dot(V, R), 0.0), shininess);
+
+        vec4 fColor = diffuse + specular + ambient;
+        fColor.a = 1.0;
+
+        gl_FragColor = fColor;
     }
 
 
@@ -54,7 +63,7 @@
     <body onload="main()">
     <h1 id="mode">Joe Colley's Final Project</h1>
     <!--<canvas id="webgl" class="box" width="1600" height="900" style="border: 3px solid black"> Commented out for half screen debugging--->
-    <canvas id="webgl" class="box" width="400" height="225" style="border: 3px solid black">
+    <canvas id="webgl" class="box" width="600" height="338" style="border: 3px solid black">
         Please use a browser that supports the "canvas" tag.
     </canvas>
     </body>
