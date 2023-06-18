@@ -6,6 +6,7 @@
     <script id="vshader" type="x-shader/x-vertex">
     attribute vec4 a_position;
     attribute vec3 a_normal;
+    attribute vec2 a_texcoord;
 
     uniform vec4 u_light_position;
     uniform mat4 u_projection_matrix;
@@ -13,6 +14,7 @@
     uniform mat4 u_world_matrix;
 
     varying vec3 L, N, V;
+    varying vec2 v_texcoord;
 
     void main()
     {
@@ -24,6 +26,8 @@
         V = normalize(-a_normal);
 
         gl_Position = mvp_matrix * a_position;
+
+        v_texcoord = vec2(a_texcoord.x, 1.0 - a_texcoord.y);
     }
 
     </script>
@@ -31,9 +35,12 @@
     <script id="fshader" type="x-shader/x-fragment">
     precision mediump float;
 
-    varying vec3 L, N, V;
+    uniform sampler2D u_texture;
     uniform vec4 ambientProduct, diffuseProduct, specularProduct;
     uniform float shininess;
+
+    varying vec3 L, N, V;
+    varying vec2 v_texcoord;
 
     void main()
     {
@@ -46,7 +53,7 @@
         vec4 fColor = diffuse + specular + ambient;
         fColor.a = 1.0;
 
-        gl_FragColor = fColor;
+        gl_FragColor = texture2D(u_texture, v_texcoord) + fColor;
     }
 
     </script>

@@ -25,6 +25,7 @@ let worldMatrixUniformLoc
 //attribute locations
 let positionAttributeLoc;
 let normalAttributeLoc;
+let texCoordAttributeLoc;
 
 //all object info
 let object_count = 0;
@@ -196,11 +197,10 @@ function make_lighting() {
     gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"), flatten(ambientProduct));
     gl.uniform4fv(gl.getUniformLocation(program, "u_light_position"), flatten(lightPosition));
     gl.uniform1f(gl.getUniformLocation(program, "shininess"), materialShininess);
-
 }
 
 let alpha = 0;
-let alpha_speed = 3;
+let alpha_speed = .5;
 
 function render() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -233,7 +233,7 @@ function loadModel(model) {
     waitForLoadedModel(model).then(
         function (value) {
             console.log("Model Loaded!");
-            pushModelInfo(model);
+            pushModelVertices(model);
             make_buffers();
         },
         function (reason) {
@@ -243,7 +243,7 @@ function loadModel(model) {
 }
 
 //How to display the model
-function pushModelInfo(model) {
+function pushModelVertices(model) {
     const vector_size = 3;
     let total = 0;
     //add a new object steps
@@ -272,6 +272,10 @@ function pushModelInfo(model) {
 
     //increase object count
     object_count++;
+}
+
+function pushModelTexture(material){
+    
 }
 
 //Promise that checks every 1.5 seconds if model has loaded
