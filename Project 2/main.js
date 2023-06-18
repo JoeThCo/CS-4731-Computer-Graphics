@@ -228,7 +228,7 @@ function pushModelInfo(model) {
 }
 
 //Promise that checks every 1.5 seconds if model has loaded
-function checkIsLoaded(model) {
+function checkIsModelLoaded(model) {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
             resolve(model.objParsed && model.mtlParsed);
@@ -239,14 +239,8 @@ function checkIsLoaded(model) {
 //Waits for model to be loaded
 async function waitForLoadedModel(model) {
     while (true) {
-        if (await checkIsLoaded(model)) {
+        if (await checkIsModelLoaded(model)) {
             break;
         }
     }
 }
-
-//other objs
-/*
-    // Get the bunny (you will not need this one until Part II)
-
- */
