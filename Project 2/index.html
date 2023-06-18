@@ -5,6 +5,7 @@
     <title>Joe Colley's Final Project</title>
     <script id="vshader" type="x-shader/x-vertex">
     attribute vec4 a_position;
+    attribute vec3 a_normal;
 
     uniform vec4 u_light_position;
     uniform mat4 u_projection_matrix;
@@ -20,10 +21,11 @@
 
         L = normalize(u_light_position.xyz - pos);
         N = normalize(mvp_matrix * a_position).xyz;
-        V = normalize(-pos);
+        V = normalize(-a_normal);
 
         gl_Position = mvp_matrix * a_position;
     }
+
     </script>
 
     <script id="fshader" type="x-shader/x-fragment">
@@ -46,6 +48,7 @@
 
         gl_FragColor = fColor;
     }
+
 
 
     </script>
