@@ -2,6 +2,13 @@
 let gl;
 let program;
 
+//general consts
+const LIGHT_ON = vec4(.75, .75, .75, 1.0);
+const LIGHT_OFF = vec4(.25, .25, .25, 1.0);
+
+//user inputs
+let is_light_on = true;
+
 //camera info
 const eye = vec3(0, 1.5, 5);
 const at = vec3(0, 0, 0);
@@ -26,19 +33,15 @@ let combined_normals = [];
 let object_lengths = [];
 
 //phong lighting
-let lightPosition = vec4(0.0, 0.0, 20.0, 1.0);
-let lightAmbient;
-let lightDiffuse;
-let lightSpecular;
-
-const ONE = vec4(1.0, 1.0, 1.0, 1.0);
-const HALF = vec4(0.5, 0.5, 0.5, 1.0);
-const ZERO = vec4(0.0, 0.0, 0.0, 1.0);
+let lightPosition = vec4(0.0, 0.0, 50.0, 1.0);
+let lightAmbient = LIGHT_ON;
+let lightDiffuse = LIGHT_ON;
+let lightSpecular = LIGHT_ON;
 
 //material info
 let materialAmbient = vec4(0.75, 0.75, 0.75, 1.0);
-let materialDiffuse = vec4(1.0, 1.0, 0.5, 1.0);
-let materialSpecular = vec4(1.0, 1.0, 1.0, 1.0);
+let materialDiffuse = vec4(0.5, 0.5, 0.5, 1.0);
+let materialSpecular = vec4(0.5, 0.5, 0.5, 1.0);
 let materialShininess = 1.0;
 
 //test info
@@ -102,19 +105,9 @@ function main() {
     program = initShaders(gl, "vshader", "fshader");
     gl.useProgram(program);
 
-    lightAmbient = ONE;
-    lightDiffuse = ONE;
-    lightSpecular = ONE;
+    window.addEventListener("keydown", on_key_down);
 
-    let diffuseProduct = mult(lightDiffuse, materialDiffuse);
-    let specularProduct = mult(lightSpecular, materialSpecular);
-    let ambientProduct = mult(lightAmbient, materialAmbient);
-
-    gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"), flatten(diffuseProduct));
-    gl.uniform4fv(gl.getUniformLocation(program, "specularProduct"), flatten(specularProduct));
-    gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"), flatten(ambientProduct));
-    gl.uniform4fv(gl.getUniformLocation(program, "u_light_position"), flatten(lightPosition));
-    gl.uniform1f(gl.getUniformLocation(program, "shininess"), materialShininess);
+    make_lighting();
 
     //get attribute locations
     positionAttributeLoc = gl.getAttribLocation(program, "a_position");
@@ -191,6 +184,19 @@ function make_buffers() {
     gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(combined_normals), gl.STATIC_DRAW);
     gl.vertexAttribPointer(normalAttributeLoc, 3, gl.FLOAT, false, 0, 0);
+}
+
+function make_lighting() {
+    let diffuseProduct = mult(lightDiffuse, materialDiffuse);
+    let specularProduct = mult(lightSpecular, materialSpecular);
+    let ambientProduct = mult(lightAmbient, materialAmbient);
+
+    gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"), flatten(diffuseProduct));
+    gl.uniform4fv(gl.getUniformLocation(program, "specularProduct"), flatten(specularProduct));
+    gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"), flatten(ambientProduct));
+    gl.uniform4fv(gl.getUniformLocation(program, "u_light_position"), flatten(lightPosition));
+    gl.uniform1f(gl.getUniformLocation(program, "shininess"), materialShininess);
+
 }
 
 let alpha = 0;
@@ -284,4 +290,27 @@ async function waitForLoadedModel(model) {
             break;
         }
     }
+}
+
+function on_key_down(event) {
+    const key = event.key;
+
+    if (key === 'l') {
+        set_street_light(is_light_on = !is_light_on);
+    }
+}
+
+function set_street_light(state) {
+    if (state) {
+        lightSpecular = LIGHT_ON;
+        lightDiffuse = LIGHT_ON;
+        lightAmbient = LIGHT_ON;
+    } else {
+        lightSpecular = LIGHT_OFF;
+        lightDiffuse = LIGHT_OFF;
+        lightAmbient = LIGHT_OFF;
+    }
+
+    make_lighting();
+    console.log("Light is: " + state);
 }
