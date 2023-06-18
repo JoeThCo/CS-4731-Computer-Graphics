@@ -27,7 +27,7 @@
 
         gl_Position = mvp_matrix * a_position;
 
-        v_texcoord = vec2(a_texcoord.x, 1.0 - a_texcoord.y);
+        v_texcoord = vec2(a_texcoord.x, a_texcoord.y);
     }
 
     </script>

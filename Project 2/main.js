@@ -32,6 +32,7 @@ let texCoordAttributeLoc;
 //all object info
 let object_count = 0;
 let combined_positions = [];
+let combined_texture_cords = [];
 let combined_normals = [];
 let object_lengths = [];
 
@@ -108,6 +109,11 @@ function main() {
     program = initShaders(gl, "vshader", "fshader");
     gl.useProgram(program);
 
+    //backface culling
+    gl.enable(gl.CULL_FACE);
+    gl.cullFace(gl.BACK);
+    gl.frontFace(gl.CCW);
+
     window.addEventListener("keydown", on_key_down);
 
     make_lighting();
@@ -131,8 +137,9 @@ function main() {
         test_shapes();
     }
 
-    make_buffers();
     load_all_models();
+
+    make_buffers();
     render();
 }
 
@@ -193,7 +200,7 @@ function make_buffers() {
     //tex buffer
     const texBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(combined_positions), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(combined_texture_cords), gl.STATIC_DRAW);
     gl.vertexAttribPointer(texCoordAttributeLoc, 2, gl.FLOAT, false, 0, 0);
 }
 
@@ -253,20 +260,19 @@ function loadModel(model) {
 
 //How to display the model
 function pushModelVertices(model) {
-    const vector_size = 3;
     let total = 0;
 
     //add a new object steps
     for (let i = 0; i < model.faces.length; i++) {
         let c_face = model.faces[i];
-        console.log(c_face);
 
         for (let j = 0; j < c_face.faceVertices.length; j++) {
             let c_faceVertices = c_face.faceVertices[j];
             let c_faceNormals = c_face.faceNormals[j];
+            let c_faceTexCoords = c_face.faceTexCoords[j];
 
             //get the first vec3 numbers
-            for (let k = 0; k < vector_size; k++) {
+            for (let k = 0; k < 3; k++) {
                 //add to a combined postions array
                 combined_positions.push(c_faceVertices[k]);
 
@@ -274,7 +280,13 @@ function pushModelVertices(model) {
                 combined_normals.push(c_faceNormals[k]);
             }
 
-            total += vector_size;
+            if (model.textured) {
+                for (let t = 0; t < 2; t++) {
+                    //add to a combined text cords array
+                    combined_texture_cords.push(c_faceTexCoords[t]);
+                }
+            }
+            total += 3;
         }
     }
 
@@ -288,9 +300,8 @@ function pushModelVertices(model) {
 function pushModelTexture(model) {
     if (model.imagePath !== null) {
         //make texture
-        gl.activeTexture(gl.TEXTURE0);
-
         const texture = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, texture);
 
         //make image
@@ -304,11 +315,6 @@ function pushModelTexture(model) {
         })
 
         image.src = model.imagePath;
-
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     }
 }
 
