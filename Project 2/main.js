@@ -29,10 +29,15 @@ let texCoordAttributeLoc;
 
 //all object info
 let object_count = 0;
+let object_positions = [
+    vec3(0.0, 0.0, 2.5)
+];
+let object_lengths = [];
+
+//combinded information
 let combined_positions = [];
 let combined_normals = [];
 let combined_texture_cords = [];
-let object_lengths = [];
 
 //phong lighting
 let lightPosition = vec4(0.0, 0.0, 50.0, 1.0);
@@ -46,46 +51,15 @@ let materialDiffuse = vec4(0.5, 0.5, 0.5, 1.0);
 let materialSpecular = vec4(0.5, 0.5, 0.5, 1.0);
 let materialShininess = 1.0;
 
-//test info
-const triangle_positions = [
-    // Vertex 1
-    -0.5, 0.5, 0.0,
-    // Vertex 2
-    -0.5, -0.5, 0.0,
-    // Vertex 3
-    0.5, -0.5, 0.0
-];
-const triangle_normals = [
-    // Vertex 1
-    0.0, 0.0, 1.0,
-    // Vertex 2
-    0.0, 0.0, 1.0,
-    // Vertex 3
-    0.0, 0.0, 1.0
-];
-const square_positions = [
-    // Vertex 1
-    -0.5, 0.5, 0.0,
-    // Vertex 2
-    -0.5, -0.5, 0.0,
-    // Vertex 3
-    0.5, -0.5, 0.0,
-    // Vertex 4
-    0.5, 0.5, 0.0
-];
-const square_normals = [
-    // Vertex 1
-    0.0, 0.0, 1.0,
-    // Vertex 2
-    0.0, 0.0, 1.0,
-    // Vertex 3
-    0.0, 0.0, 1.0,
-    // Vertex 4
-    0.0, 0.0, 1.0
-];
+//render variables
+let is_playing = true;
 
-//debug flag
-let want_test_shapes = false;
+const ALPHA_PLAY = .5
+const ALPHA_PAUSE = 0;
+
+let alpha = 0;
+let alpha_delta = ALPHA_PLAY
+
 
 function main() {
     // Retrieve <canvas> element
@@ -116,6 +90,27 @@ function main() {
 
     make_lighting();
 
+    attribute_init();
+    uniform_init();
+
+    load_all_models();
+    make_buffers();
+    render();
+}
+
+function make_lighting() {
+    let diffuseProduct = mult(lightDiffuse, materialDiffuse);
+    let specularProduct = mult(lightSpecular, materialSpecular);
+    let ambientProduct = mult(lightAmbient, materialAmbient);
+
+    gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"), flatten(diffuseProduct));
+    gl.uniform4fv(gl.getUniformLocation(program, "specularProduct"), flatten(specularProduct));
+    gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"), flatten(ambientProduct));
+    gl.uniform4fv(gl.getUniformLocation(program, "u_light_position"), flatten(lightPosition));
+    gl.uniform1f(gl.getUniformLocation(program, "shininess"), materialShininess);
+}
+
+function attribute_init() {
     //get attribute locations
     positionAttributeLoc = gl.getAttribLocation(program, "a_position");
     normalAttributeLoc = gl.getAttribLocation(program, "a_normal");
@@ -125,33 +120,14 @@ function main() {
     gl.enableVertexAttribArray(positionAttributeLoc);
     gl.enableVertexAttribArray(normalAttributeLoc);
     gl.enableVertexAttribArray(texCoordAttributeLoc);
+}
 
+function uniform_init() {
     //get uniform locations
     projectionMatrixUniformLoc = gl.getUniformLocation(program, "u_projection_matrix");
     viewMatrixUniformLoc = gl.getUniformLocation(program, "u_view_matrix");
     worldMatrixUniformLoc = gl.getUniformLocation(program, "u_world_matrix");
 
-    if (want_test_shapes) {
-        test_shapes();
-    }
-
-    load_all_models();
-    make_buffers();
-    render();
-}
-
-function test_shapes() {
-    //test triangle
-    combined_positions.push(...triangle_positions);
-    combined_normals.push(...triangle_normals);
-    object_lengths.push(triangle_positions.length);
-    object_count++;
-
-    //test square
-    combined_positions.push(...square_positions);
-    combined_normals.push(...square_normals);
-    object_lengths.push(square_positions.length);
-    object_count++;
 }
 
 function load_all_models() {
@@ -175,7 +151,7 @@ function load_all_models() {
     //leave it in this order
     //else it doesnt it load them all
     loadModel(stopSign);
-    //loadModel(street);
+    loadModel(street);
     //loadModel(lamp);
     //loadModel(car);
     //loadModel(bunny);
@@ -200,44 +176,35 @@ function make_buffers() {
     gl.vertexAttribPointer(texCoordAttributeLoc, 2, gl.FLOAT, false, 0, 0);
 }
 
-function make_lighting() {
-    let diffuseProduct = mult(lightDiffuse, materialDiffuse);
-    let specularProduct = mult(lightSpecular, materialSpecular);
-    let ambientProduct = mult(lightAmbient, materialAmbient);
-
-    gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"), flatten(diffuseProduct));
-    gl.uniform4fv(gl.getUniformLocation(program, "specularProduct"), flatten(specularProduct));
-    gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"), flatten(ambientProduct));
-    gl.uniform4fv(gl.getUniformLocation(program, "u_light_position"), flatten(lightPosition));
-    gl.uniform1f(gl.getUniformLocation(program, "shininess"), materialShininess);
-}
-
-let alpha = 0;
-let alpha_speed = .5;
+let bob_height = 1;
+let bob_frequency = .25;
 
 function render() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    //matrix zone
     const projection_matrix = perspective(fovy, 1, zNear, zFar);
-    const world_matrix = rotateY(alpha);
+    let model_matrix = rotateY(alpha);
     const view_matrix = lookAt(eye, at, up);
-
-    gl.uniformMatrix4fv(projectionMatrixUniformLoc, false, flatten(projection_matrix));
-    gl.uniformMatrix4fv(viewMatrixUniformLoc, false, flatten(view_matrix));
-    gl.uniformMatrix4fv(worldMatrixUniformLoc, false, flatten(world_matrix));
 
     let last_count = 0;
     for (let i = 0; i < object_count; i++) {
+        //move object to cords
+        model_matrix = mult(model_matrix, translate(object_positions[i]));
+
+        gl.uniformMatrix4fv(projectionMatrixUniformLoc, false, flatten(projection_matrix));
+        gl.uniformMatrix4fv(viewMatrixUniformLoc, false, flatten(view_matrix));
+        gl.uniformMatrix4fv(worldMatrixUniformLoc, false, flatten(model_matrix));
+
         //index through the positions/normal length array for offset
         const current_count = object_lengths[i] / 3;
-
         gl.drawArrays(gl.TRIANGLES, last_count, current_count);
 
         //save last
         last_count = current_count;
     }
 
-    alpha += alpha_speed;
+    alpha += alpha_delta;
     requestAnimationFrame(render);
 }
 
@@ -284,6 +251,7 @@ function pushModelVertices(model) {
                     combined_texture_cords.push(c_faceTexCoords[t]);
                 }
             }
+
             total += 3;
         }
     }
@@ -295,8 +263,9 @@ function pushModelVertices(model) {
     object_count++;
 }
 
+//how to load a texture
 function pushModelTexture(model) {
-    if (model.imagePath !== null) {
+    if (model.textured) {
         //make texture
         gl.activeTexture(gl.TEXTURE0);
 
@@ -341,14 +310,19 @@ async function waitForLoadedModel(model) {
     }
 }
 
+//user key pressed input
+
 function on_key_down(event) {
     const key = event.key;
 
     if (key === 'l') {
         set_street_light(is_light_on = !is_light_on);
+    } else if (key === 'c') {
+        set_camera_animation(is_playing = !is_playing);
     }
 }
 
+//set the street light state
 function set_street_light(state) {
     if (state) {
         lightSpecular = LIGHT_ON;
@@ -362,4 +336,13 @@ function set_street_light(state) {
 
     make_lighting();
     console.log("Light is: " + state);
+}
+
+//play and pause camera animation
+function set_camera_animation(state) {
+    if (state) {
+        alpha_delta = ALPHA_PLAY;
+    } else {
+        alpha_delta = ALPHA_PAUSE;
+    }
 }
