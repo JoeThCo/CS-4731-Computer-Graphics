@@ -7,8 +7,6 @@ const LIGHT_ON = vec4(.75, .75, .75, 1.0);
 const LIGHT_OFF = vec4(.25, .25, .25, 1.0);
 
 //user inputs
-let alpha = 0;
-let alpha_speed = .5;
 let is_light_on = true;
 
 //camera info
@@ -115,12 +113,10 @@ function main() {
     //get attribute locations
     positionAttributeLoc = gl.getAttribLocation(program, "a_position");
     normalAttributeLoc = gl.getAttribLocation(program, "a_normal");
-    texCoordAttributeLoc = gl.getAttribLocation(program, "a_texcoord");
 
     //enable postion/normal data
     gl.enableVertexAttribArray(positionAttributeLoc);
     gl.enableVertexAttribArray(normalAttributeLoc);
-    gl.enableVertexAttribArray(texCoordAttributeLoc);
 
     //get uniform locations
     projectionMatrixUniformLoc = gl.getUniformLocation(program, "u_projection_matrix");
@@ -171,9 +167,9 @@ function load_all_models() {
     //leave it in this order
     //else it doesnt it load them all
     loadModel(stopSign);
-    //loadModel(street);
-    //loadModel(lamp);
-    //loadModel(car);
+    loadModel(street);
+    loadModel(lamp);
+    loadModel(car);
     //loadModel(bunny);
 }
 
@@ -189,12 +185,6 @@ function make_buffers() {
     gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(combined_normals), gl.STATIC_DRAW);
     gl.vertexAttribPointer(normalAttributeLoc, 3, gl.FLOAT, false, 0, 0);
-
-    //tex buffer
-    const texBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(combined_positions), gl.STATIC_DRAW);
-    gl.vertexAttribPointer(texCoordAttributeLoc, 2, gl.FLOAT, false, 0, 0);
 }
 
 function make_lighting() {
@@ -208,6 +198,9 @@ function make_lighting() {
     gl.uniform4fv(gl.getUniformLocation(program, "u_light_position"), flatten(lightPosition));
     gl.uniform1f(gl.getUniformLocation(program, "shininess"), materialShininess);
 }
+
+let alpha = 0;
+let alpha_speed = .5;
 
 function render() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -241,8 +234,6 @@ function loadModel(model) {
         function (value) {
             console.log("Model Loaded!");
             pushModelVertices(model);
-            pushModelTexture(model);
-
             make_buffers();
         },
         function (reason) {
@@ -255,11 +246,9 @@ function loadModel(model) {
 function pushModelVertices(model) {
     const vector_size = 3;
     let total = 0;
-
     //add a new object steps
     for (let i = 0; i < model.faces.length; i++) {
         let c_face = model.faces[i];
-        console.log(c_face);
 
         for (let j = 0; j < c_face.faceVertices.length; j++) {
             let c_faceVertices = c_face.faceVertices[j];
@@ -285,31 +274,8 @@ function pushModelVertices(model) {
     object_count++;
 }
 
-function pushModelTexture(model) {
-    if (model.imagePath !== null) {
-        //make texture
-        gl.activeTexture(gl.TEXTURE0);
-
-        const texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-
-        //make image
-        const image = new Image();
-        image.crossOrigin = "";
-
-        image.addEventListener('load', function () {
-            gl.bindTexture(gl.TEXTURE_2D, texture);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-            gl.generateMipmap(gl.TEXTURE_2D);
-        })
-
-        image.src = model.imagePath;
-
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    }
+function pushModelTexture(material){
+    
 }
 
 //Promise that checks every 1.5 seconds if model has loaded

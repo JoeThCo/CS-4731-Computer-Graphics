@@ -53,9 +53,7 @@
         vec4 fColor = diffuse + specular + ambient;
         fColor.a = 1.0;
 
-        vec4 texColor = texture2D(u_texture, v_texcoord);
-
-        gl_FragColor = texColor * fColor;
+        gl_FragColor = texture2D(u_texture, v_texcoord) + fColor;
     }
 
     </script>
