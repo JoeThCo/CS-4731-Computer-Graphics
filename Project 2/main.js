@@ -2,19 +2,19 @@
 let gl;
 let program;
 
-
 //camera info
-const camera_height = 10;
+let eye = vec3(0, 2.5, 7.5);
 const up = vec3(0, 1, 0);
 const zNear = 0.1;
 const zFar = 25;
-const fovy = 90;
+const fovy = 105;
 
 //uniform locations
 let modelMatrixUniformLoc;
 let projectionMatrixUniformLoc;
 let viewMatrixUniformLoc;
 let worldMatrixUniformLoc
+let isTextureUniformLoc;
 
 //attribute locations
 let positionAttributeLoc;
@@ -54,7 +54,7 @@ let materialShininess = 1.0;
 
 //render variables
 let is_playing = true;
-const ALPHA_PLAY = .01;
+const ALPHA_PLAY = 1;
 const ALPHA_PAUSE = 0;
 let alpha = 0;
 let alpha_delta = ALPHA_PLAY
@@ -126,6 +126,7 @@ function uniform_init() {
     viewMatrixUniformLoc = gl.getUniformLocation(program, "u_view_matrix");
     worldMatrixUniformLoc = gl.getUniformLocation(program, "u_world_matrix");
     modelMatrixUniformLoc = gl.getUniformLocation(program, "u_model_matrix");
+    isTextureUniformLoc = gl.getUniformLocation(program, "u_is_textured");
 }
 
 function load_all_models() {
@@ -149,7 +150,7 @@ function load_all_models() {
     //leave it in this order
     //else it doesnt it load them all
     loadModel(stopSign);
-    //loadModel(street);
+    loadModel(street);
     // loadModel(lamp);
     // loadModel(car);
     //loadModel(bunny);
@@ -174,33 +175,30 @@ function make_buffers() {
     gl.vertexAttribPointer(texCoordAttributeLoc, 2, gl.FLOAT, false, 0, 0);
 }
 
-let radius = 5.0;
-
 function render() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     //matrix zone
     const projection_matrix = perspective(fovy, 1, zNear, zFar);
-    const world_matrix = mat4();
+    const world_matrix = rotateY(alpha);
 
     //camera around 0,0
-    let eye = vec3(radius * Math.sin(alpha), camera_height, radius * Math.cos(alpha));
     const view_matrix = lookAt(eye, vec3(0, 0, 0), up);
 
     let last_count = 0;
     for (let i = 0; i < object_count; i++) {
         //move object to cords
-        //let current_pos = object_positions[i];
+        let current_pos = object_positions[i];
         //model matrix
-        // let x = current_pos[0];
-        // let y = current_pos[1];
-        // let z = current_pos[2];
-        // let model_matrix = translate(x, y, z);
+        let x = current_pos[0];
+        let y = current_pos[1];
+        let z = current_pos[2];
+        let model_matrix = translate(x, y, z);
 
         gl.uniformMatrix4fv(projectionMatrixUniformLoc, false, flatten(projection_matrix));
         gl.uniformMatrix4fv(viewMatrixUniformLoc, false, flatten(view_matrix));
         gl.uniformMatrix4fv(worldMatrixUniformLoc, false, flatten(world_matrix));
-        //gl.uniformMatrix4fv(modelMatrixUniformLoc, false, flatten(model_matrix));
+        gl.uniformMatrix4fv(modelMatrixUniformLoc, false, flatten(model_matrix));
 
         //index through the positions/normal length array for offset
         const current_count = object_lengths[i] / 3;
@@ -219,8 +217,9 @@ function loadModel(model) {
     waitForLoadedModel(model).then(
         function (value) {
             console.log("Model Loaded!");
-            pushModelVertices(model);
+            gl.uniform1i(isTextureUniformLoc, model.textured);
 
+            pushModelVertices(model);
             if (model.textured) {
                 pushModelTexture(model);
             }
