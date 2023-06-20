@@ -26,8 +26,7 @@
         V = normalize(-a_normal);
 
         gl_Position = mvp_matrix * a_position;
-
-        v_texcoord = vec2(a_texcoord.x, 1.0 - a_texcoord.y);
+        v_texcoord = vec2(a_texcoord.x, a_texcoord.y);
     }
 
     </script>
@@ -53,7 +52,8 @@
         vec4 fColor = diffuse + specular + ambient;
         fColor.a = 1.0;
 
-        gl_FragColor = texture2D(u_texture, v_texcoord) + fColor;
+        vec4 texColor = texture2D(u_texture, v_texcoord);
+        gl_FragColor = texColor * fColor;
     }
 
     </script>
