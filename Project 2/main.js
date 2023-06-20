@@ -195,10 +195,6 @@ function make_buffers() {
     gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(combined_positions), gl.STATIC_DRAW);
     gl.vertexAttribPointer(texCoordAttributeLoc, 2, gl.FLOAT, false, 0, 0);
-
-    //indices buffer
-    const indicesBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
 }
 
 function make_lighting() {
@@ -256,10 +252,6 @@ function loadModel(model) {
 }
 
 //How to display the model
-let test_position_map = new Map();
-let test_indices = [];
-let test_index = 0;
-
 function pushModelVertices(model) {
     const vector_size = 3;
     let total = 0;
@@ -273,10 +265,6 @@ function pushModelVertices(model) {
             let c_faceVertices = c_face.faceVertices[j];
             let c_faceNormals = c_face.faceNormals[j];
 
-            if (!test_position_map.has(c_faceVertices.toString())) {
-                test_position_map.set(c_faceVertices.toString(), test_index++);
-            }
-
             //get the first vec3 numbers
             for (let k = 0; k < vector_size; k++) {
                 //add to a combined postions array
@@ -289,19 +277,6 @@ function pushModelVertices(model) {
             total += vector_size;
         }
     }
-
-    //get the indices map from the vertices
-    for (let i = 0; i < model.faces.length; i++) {
-        let c_face = model.faces[i];
-
-        for (let j = 0; j < c_face.faceVertices.length; j++) {
-            let map_index = test_position_map.get(c_face.faceVertices[j].toString());
-            test_indices.push(map_index);
-        }
-    }
-
-    console.log(test_position_map);
-    console.log(test_indices);
 
     //add positions/normal length to an object size array
     object_lengths.push(total);
