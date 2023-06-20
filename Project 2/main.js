@@ -2,22 +2,16 @@
 let gl;
 let program;
 
-//general consts
-const LIGHT_ON = vec4(.75, .75, .75, 1.0);
-const LIGHT_OFF = vec4(.25, .25, .25, 1.0);
-
-//user inputs
-let is_light_on = true;
 
 //camera info
-const eye = vec3(0, 1.5, 5);
-const at = vec3(0, 0, 0);
+const camera_height = 10;
 const up = vec3(0, 1, 0);
 const zNear = 0.1;
 const zFar = 25;
-const fovy = 75;
+const fovy = 90;
 
 //uniform locations
+let modelMatrixUniformLoc;
 let projectionMatrixUniformLoc;
 let viewMatrixUniformLoc;
 let worldMatrixUniformLoc
@@ -30,7 +24,10 @@ let texCoordAttributeLoc;
 //all object info
 let object_count = 0;
 let object_positions = [
-    vec3(0.0, 0.0, 2.5)
+    vec3(5.0, 0.0, 0.0), //stop sign
+    vec3(0, 0, 0), //street
+    // vec3(0.0, 0.0, 0.0), //streetlight
+    // vec3(0.5, 0, 0) //car
 ];
 let object_lengths = [];
 
@@ -39,7 +36,11 @@ let combined_positions = [];
 let combined_normals = [];
 let combined_texture_cords = [];
 
-//phong lighting
+//lgihting
+let is_light_on = true;
+const LIGHT_ON = vec4(.75, .75, .75, 1.0);
+const LIGHT_OFF = vec4(.25, .25, .25, 1.0);
+
 let lightPosition = vec4(0.0, 0.0, 50.0, 1.0);
 let lightAmbient = LIGHT_ON;
 let lightDiffuse = LIGHT_ON;
@@ -53,13 +54,10 @@ let materialShininess = 1.0;
 
 //render variables
 let is_playing = true;
-
-const ALPHA_PLAY = .5
+const ALPHA_PLAY = .01;
 const ALPHA_PAUSE = 0;
-
 let alpha = 0;
 let alpha_delta = ALPHA_PLAY
-
 
 function main() {
     // Retrieve <canvas> element
@@ -127,7 +125,7 @@ function uniform_init() {
     projectionMatrixUniformLoc = gl.getUniformLocation(program, "u_projection_matrix");
     viewMatrixUniformLoc = gl.getUniformLocation(program, "u_view_matrix");
     worldMatrixUniformLoc = gl.getUniformLocation(program, "u_world_matrix");
-
+    modelMatrixUniformLoc = gl.getUniformLocation(program, "u_model_matrix");
 }
 
 function load_all_models() {
@@ -151,9 +149,9 @@ function load_all_models() {
     //leave it in this order
     //else it doesnt it load them all
     loadModel(stopSign);
-    loadModel(street);
-    //loadModel(lamp);
-    //loadModel(car);
+    //loadModel(street);
+    // loadModel(lamp);
+    // loadModel(car);
     //loadModel(bunny);
 }
 
@@ -176,25 +174,33 @@ function make_buffers() {
     gl.vertexAttribPointer(texCoordAttributeLoc, 2, gl.FLOAT, false, 0, 0);
 }
 
-let bob_height = 1;
-let bob_frequency = .25;
+let radius = 5.0;
 
 function render() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     //matrix zone
     const projection_matrix = perspective(fovy, 1, zNear, zFar);
-    let model_matrix = rotateY(alpha);
-    const view_matrix = lookAt(eye, at, up);
+    const world_matrix = mat4();
+
+    //camera around 0,0
+    let eye = vec3(radius * Math.sin(alpha), camera_height, radius * Math.cos(alpha));
+    const view_matrix = lookAt(eye, vec3(0, 0, 0), up);
 
     let last_count = 0;
     for (let i = 0; i < object_count; i++) {
         //move object to cords
-        model_matrix = mult(model_matrix, translate(object_positions[i]));
+        //let current_pos = object_positions[i];
+        //model matrix
+        // let x = current_pos[0];
+        // let y = current_pos[1];
+        // let z = current_pos[2];
+        // let model_matrix = translate(x, y, z);
 
         gl.uniformMatrix4fv(projectionMatrixUniformLoc, false, flatten(projection_matrix));
         gl.uniformMatrix4fv(viewMatrixUniformLoc, false, flatten(view_matrix));
-        gl.uniformMatrix4fv(worldMatrixUniformLoc, false, flatten(model_matrix));
+        gl.uniformMatrix4fv(worldMatrixUniformLoc, false, flatten(world_matrix));
+        //gl.uniformMatrix4fv(modelMatrixUniformLoc, false, flatten(model_matrix));
 
         //index through the positions/normal length array for offset
         const current_count = object_lengths[i] / 3;
@@ -214,7 +220,10 @@ function loadModel(model) {
         function (value) {
             console.log("Model Loaded!");
             pushModelVertices(model);
-            pushModelTexture(model);
+
+            if (model.textured) {
+                pushModelTexture(model);
+            }
 
             make_buffers();
         },
@@ -265,31 +274,29 @@ function pushModelVertices(model) {
 
 //how to load a texture
 function pushModelTexture(model) {
-    if (model.textured) {
-        //make texture
-        gl.activeTexture(gl.TEXTURE0);
+    //make texture
+    gl.activeTexture(gl.TEXTURE0);
 
-        const texture = gl.createTexture();
-        gl.activeTexture(gl.TEXTURE0);
+    const texture = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+    //make image
+    const image = new Image();
+    image.crossOrigin = "";
+
+    image.addEventListener('load', function () {
         gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+        gl.generateMipmap(gl.TEXTURE_2D);
+    })
 
-        //make image
-        const image = new Image();
-        image.crossOrigin = "";
+    image.src = model.imagePath;
 
-        image.addEventListener('load', function () {
-            gl.bindTexture(gl.TEXTURE_2D, texture);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-            gl.generateMipmap(gl.TEXTURE_2D);
-        })
-
-        image.src = model.imagePath;
-
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    }
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
 }
 
 //Promise that checks every 1.5 seconds if model has loaded
@@ -311,7 +318,6 @@ async function waitForLoadedModel(model) {
 }
 
 //user key pressed input
-
 function on_key_down(event) {
     const key = event.key;
 
@@ -322,7 +328,7 @@ function on_key_down(event) {
     }
 }
 
-//set the street light state
+//set the streetlight state
 function set_street_light(state) {
     if (state) {
         lightSpecular = LIGHT_ON;
