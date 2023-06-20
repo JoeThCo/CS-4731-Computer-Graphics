@@ -54,14 +54,15 @@
         fColor.a = 1.0;
 
         vec4 texColor = texture2D(u_texture, v_texcoord);
+        vec4 test_color = vec4(1,0,0,1);
 
-        if(!u_is_textured)
+        if(u_is_textured)
         {
             gl_FragColor = texColor * fColor;
         }
         else
         {
-            gl_FragColor = fColor;
+            gl_FragColor = fColor * test_color;
         }
     }
     </script>

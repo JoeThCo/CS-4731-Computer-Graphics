@@ -3,7 +3,7 @@ let gl;
 let program;
 
 //camera info
-let eye = vec3(0, 2.5, 7.5);
+let eye = vec3(0, 2.5, 10);
 const up = vec3(0, 1, 0);
 const zNear = 0.1;
 const zFar = 25;
@@ -22,6 +22,7 @@ let normalAttributeLoc;
 let texCoordAttributeLoc;
 
 //all object info
+let all_models = [];
 let object_count = 0;
 let object_positions = [
     vec3(5.0, 0.0, 0.0), //stop sign
@@ -187,6 +188,7 @@ function render() {
 
     let last_count = 0;
     for (let i = 0; i < object_count; i++) {
+
         //move object to cords
         let current_pos = object_positions[i];
         //model matrix
@@ -195,6 +197,10 @@ function render() {
         let z = current_pos[2];
         let model_matrix = translate(x, y, z);
 
+        //textured or not
+        gl.uniform1i(isTextureUniformLoc, all_models[i].textured);
+
+        //position
         gl.uniformMatrix4fv(projectionMatrixUniformLoc, false, flatten(projection_matrix));
         gl.uniformMatrix4fv(viewMatrixUniformLoc, false, flatten(view_matrix));
         gl.uniformMatrix4fv(worldMatrixUniformLoc, false, flatten(world_matrix));
@@ -217,14 +223,13 @@ function loadModel(model) {
     waitForLoadedModel(model).then(
         function (value) {
             console.log("Model Loaded!");
-            gl.uniform1i(isTextureUniformLoc, model.textured);
-
             pushModelVertices(model);
             if (model.textured) {
                 pushModelTexture(model);
             }
 
             make_buffers();
+            all_models.push(model);
         },
         function (reason) {
             console.log("Model Failed to Load!");
