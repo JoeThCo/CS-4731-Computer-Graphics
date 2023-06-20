@@ -178,7 +178,6 @@ function set_buffers(model_info) {
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model_info.texCoords), gl.STATIC_DRAW);
     gl.vertexAttribPointer(colorAttributeLoc, 4, gl.FLOAT, false, 0, 0);
-
 }
 
 function render() {
