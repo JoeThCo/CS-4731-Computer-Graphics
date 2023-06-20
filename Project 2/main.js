@@ -23,12 +23,11 @@ let texCoordAttributeLoc;
 
 //all object info
 let all_models = [];
-let object_count = 0;
 let object_positions = [
     vec3(0, 0, 0), //lamp
-    vec3(1.0, 0.0, 0.0), //stop sign
+    vec3(5.0, 0.0, -1.0), //stop sign
     vec3(0.0, 0, 0), //street
-    vec3(0.0, 0.0, 0.0), //car
+    vec3(3.0, 0.0, 0.0), //car
 ];
 //lgihting
 let is_light_on = true;
@@ -48,6 +47,7 @@ let materialShininess = 1.0;
 
 //render variables
 let is_playing = true;
+let is_forward = true;
 const ALPHA_PLAY = 2.5;
 const ALPHA_PAUSE = 0;
 let alpha = 0;
@@ -318,6 +318,8 @@ function on_key_down(event) {
         set_street_light(is_light_on = !is_light_on);
     } else if (key === 'c') {
         set_camera_animation(is_playing = !is_playing);
+    } else if (key === 'r') {
+        set_is_forward(is_forward = !is_forward);
     }
 }
 
@@ -344,4 +346,9 @@ function set_camera_animation(state) {
     } else {
         alpha_delta = ALPHA_PAUSE;
     }
+}
+
+//forward or reverse the animation
+function set_is_forward(state) {
+    alpha_delta = -alpha_delta;
 }
