@@ -20,6 +20,7 @@ let isTextureUniformLoc;
 let positionAttributeLoc;
 let normalAttributeLoc;
 let texCoordAttributeLoc;
+let colorAttributeLoc;
 
 //all object info
 let all_models = [];
@@ -108,11 +109,13 @@ function attribute_init() {
     positionAttributeLoc = gl.getAttribLocation(program, "a_position");
     normalAttributeLoc = gl.getAttribLocation(program, "a_normal");
     texCoordAttributeLoc = gl.getAttribLocation(program, "a_texcoord");
+    colorAttributeLoc = gl.getAttribLocation(program,"a_color");
 
     //enable postion/normal data
     gl.enableVertexAttribArray(positionAttributeLoc);
     gl.enableVertexAttribArray(normalAttributeLoc);
     gl.enableVertexAttribArray(texCoordAttributeLoc);
+    gl.enableVertexAttribArray(colorAttributeLoc);
 }
 
 function uniform_init() {
@@ -169,6 +172,13 @@ function set_buffers(model_info) {
     gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model_info.texCoords), gl.STATIC_DRAW);
     gl.vertexAttribPointer(texCoordAttributeLoc, 2, gl.FLOAT, false, 0, 0);
+
+    //color
+    const colorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model_info.texCoords), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(colorAttributeLoc, 4, gl.FLOAT, false, 0, 0);
+
 }
 
 function render() {
