@@ -31,7 +31,15 @@ let object_positions = [
     vec3(0.0, 0, 0), //street
     vec3(3.0, 0.0, 0.0), //car
 ];
-//lgihting
+
+let object_rotations = [
+    0, //lamp
+    -90, //stop sign
+    0, //street
+    180 //car
+];
+
+//lighting
 let is_light_on = true;
 const LIGHT_ON = vec4(.75, .75, .75, 1.0);
 const LIGHT_OFF = vec4(.25, .25, .25, 1.0);
@@ -150,9 +158,9 @@ function load_all_models() {
     //leave it in this order
     //else it doesnt it load them all
     loadModel(lamp);
-    //loadModel(stopSign);
-    //loadModel(street);
-    //loadModel(car);
+    loadModel(stopSign);
+    loadModel(street);
+    loadModel(car);
     //loadModel(bunny);
 }
 
@@ -193,7 +201,8 @@ function render() {
     const view_matrix = lookAt(eye, vec3(0, 0, 0), up);
 
     for (let i = 0; i < all_models.length; i++) {
-        let model_info = getModelInfo(all_models[i]);
+        let current_model = all_models[i];
+        let model_info = getModelInfo(current_model);
         set_buffers(model_info);
 
         //move object to cords
@@ -203,16 +212,12 @@ function render() {
         let x = current_pos[0];
         let y = current_pos[1];
         let z = current_pos[2];
+
         let model_matrix = translate(x, y, z);
+        model_matrix = mult(model_matrix, rotateY(object_rotations[i]));
 
         //textured or not
-        gl.uniform1i(isTextureUniformLoc, all_models[i].textured);
-
-        //set color
-        let index = 0;
-        let diffuse = model_info.diffuse[index];
-        let color = vec4(diffuse[0], diffuse[1], diffuse[2], 1);
-        gl.uniform4fv(faceColorUniformLoc, color);
+        gl.uniform1i(isTextureUniformLoc, current_model.textured);
 
         //position
         gl.uniformMatrix4fv(projectionMatrixUniformLoc, false, flatten(projection_matrix));
@@ -257,18 +262,26 @@ function getModelInfo(model) {
 
     for (let i = 0; i < model.faces.length; i++) {
         let c_face = model.faces[i];
-        diffuse.push(model.diffuseMap.get(c_face.material));
 
         for (let j = 0; j < c_face.faceVertices.length; j++) {
+
             let c_faceVertices = c_face.faceVertices[j];
             let c_faceNormals = c_face.faceNormals[j];
             let c_faceTexCoords = c_face.faceTexCoords[j];
+            let c_faceMaterial = model.diffuseMap.get(c_face.material);
+
+            for (let m = 0; m < 4; m++) {
+                diffuse.push(c_faceMaterial[m]);
+            }
 
             for (let k = 0; k < 3; k++) {
                 //add to a combined postions array
                 vertices.push(c_faceVertices[k]);
+
                 //add to a combinded normal array
                 normals.push(c_faceNormals[k]);
+
+                //colors
             }
 
             if (model.textured) {

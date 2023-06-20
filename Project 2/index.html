@@ -41,8 +41,6 @@
     uniform sampler2D u_texture;
     uniform vec4 ambientProduct, diffuseProduct, specularProduct;
 
-    uniform vec4 u_face_color;
-
     uniform float shininess;
     uniform bool u_is_textured;
 
@@ -69,7 +67,7 @@
         }
         else
         {
-            gl_FragColor = fColor * u_face_color;
+            gl_FragColor = fColor * v_color;
         }
     }
 
