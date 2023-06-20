@@ -15,6 +15,7 @@ let projectionMatrixUniformLoc;
 let viewMatrixUniformLoc;
 let worldMatrixUniformLoc
 let isTextureUniformLoc;
+let faceColorUniformLoc;
 
 //attribute locations
 let positionAttributeLoc;
@@ -49,7 +50,7 @@ let materialShininess = 1.0;
 //render variables
 let is_playing = true;
 let is_forward = true;
-const ALPHA_PLAY = 2.5;
+const ALPHA_PLAY = 1.5;
 const ALPHA_PAUSE = 0;
 let alpha = 0;
 let alpha_delta = ALPHA_PLAY
@@ -109,7 +110,7 @@ function attribute_init() {
     positionAttributeLoc = gl.getAttribLocation(program, "a_position");
     normalAttributeLoc = gl.getAttribLocation(program, "a_normal");
     texCoordAttributeLoc = gl.getAttribLocation(program, "a_texcoord");
-    colorAttributeLoc = gl.getAttribLocation(program,"a_color");
+    colorAttributeLoc = gl.getAttribLocation(program, "a_color");
 
     //enable postion/normal data
     gl.enableVertexAttribArray(positionAttributeLoc);
@@ -125,6 +126,7 @@ function uniform_init() {
     worldMatrixUniformLoc = gl.getUniformLocation(program, "u_world_matrix");
     modelMatrixUniformLoc = gl.getUniformLocation(program, "u_model_matrix");
     isTextureUniformLoc = gl.getUniformLocation(program, "u_is_textured");
+    faceColorUniformLoc = gl.getUniformLocation(program, "u_face_color");
 }
 
 function load_all_models() {
@@ -148,9 +150,9 @@ function load_all_models() {
     //leave it in this order
     //else it doesnt it load them all
     loadModel(lamp);
-    loadModel(stopSign);
-    loadModel(street);
-    loadModel(car);
+    //loadModel(stopSign);
+    //loadModel(street);
+    //loadModel(car);
     //loadModel(bunny);
 }
 
@@ -176,7 +178,7 @@ function set_buffers(model_info) {
     //color
     const colorBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model_info.texCoords), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model_info.diffuse), gl.STATIC_DRAW);
     gl.vertexAttribPointer(colorAttributeLoc, 4, gl.FLOAT, false, 0, 0);
 }
 
@@ -206,6 +208,12 @@ function render() {
         //textured or not
         gl.uniform1i(isTextureUniformLoc, all_models[i].textured);
 
+        //set color
+        let index = 0;
+        let diffuse = model_info.diffuse[index];
+        let color = vec4(diffuse[0], diffuse[1], diffuse[2], 1);
+        gl.uniform4fv(faceColorUniformLoc, color);
+
         //position
         gl.uniformMatrix4fv(projectionMatrixUniformLoc, false, flatten(projection_matrix));
         gl.uniformMatrix4fv(viewMatrixUniformLoc, false, flatten(view_matrix));
@@ -225,6 +233,9 @@ function loadModel(model) {
     waitForLoadedModel(model).then(
         function (value) {
             console.log("Model Loaded!");
+            console.log(model.diffuseMap);
+            console.log(model.specularMap);
+
             if (model.textured) {
                 pushModelTexture(model);
             }
@@ -241,9 +252,12 @@ function getModelInfo(model) {
     let vertices = [];
     let normals = [];
     let texCoords = [];
+    let diffuse = [];
+    let specular = [];
 
     for (let i = 0; i < model.faces.length; i++) {
         let c_face = model.faces[i];
+        diffuse.push(model.diffuseMap.get(c_face.material));
 
         for (let j = 0; j < c_face.faceVertices.length; j++) {
             let c_faceVertices = c_face.faceVertices[j];
@@ -269,7 +283,8 @@ function getModelInfo(model) {
     return {
         vertices: vertices,
         normals: normals,
-        texCoords: texCoords
+        texCoords: texCoords,
+        diffuse: diffuse
     };
 }
 
@@ -327,7 +342,7 @@ function on_key_down(event) {
         set_street_light(is_light_on = !is_light_on);
     } else if (key === 'c') {
         set_camera_animation(is_playing = !is_playing);
-    } else if (key === 'r') {
+    } else if (key === 'f') {
         set_is_forward(is_forward = !is_forward);
     }
 }
