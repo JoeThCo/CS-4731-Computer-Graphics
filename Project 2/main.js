@@ -7,7 +7,7 @@ let eye = vec3(0, 2.5, 5.5);
 const up = vec3(0, 1, 0);
 const zNear = 0.1;
 const zFar = 25;
-const fovy = 105;
+const fovy = 95;
 
 //uniform locations
 let modelMatrixUniformLoc;
@@ -27,20 +27,22 @@ let colorAttributeLoc;
 let matrix_stack = [];
 let all_models = [];
 let object_positions = [
-    vec3(0, 0, 0), //lamp
+    vec3(0, 0, 0), //street
+    vec3(0.0, 0, 0),//lamp
     vec3(5.0, 0.0, -1.0), //stop sign
-    vec3(0.0, 0, 0), //street
-    vec3(3.0, 0.0, 0.0), //car
-    vec3(0, 1.5, 0) //bunny
+    vec3(1.0, 0.0, 2.0), //car
+    vec3(0, 0.75, 1.75) //bunny
 ];
-
 let object_rotations = [
+    0, //street
     0, //lamp
     -90, //stop sign
-    0, //street
-    180, //car
+    -90, //car
     0 //bunny
 ];
+let object_additional = [];
+
+const CAR_INDEX = 3;
 
 //lighting
 let is_light_on = true;
@@ -61,10 +63,8 @@ let materialShininess = 1.0;
 //render variables
 let is_car_moving = false
 let is_playing = true;
-let is_forward = true;
-
 const ALPHA_PLAY = 1;
-let alpha = 0;
+let alpha = 150;
 let alpha_delta = ALPHA_PLAY
 
 function main() {
@@ -167,11 +167,9 @@ function load_all_models() {
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/bunny.obj",
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/bunny.mtl");
 
-    //leave it in this order
-    //else it doesnt it load them all
+    loadModel(street);
     loadModel(lamp);
     loadModel(stopSign);
-    loadModel(street);
     loadModel(car);
     loadModel(bunny);
 }
@@ -208,11 +206,13 @@ function render() {
     //matrix zone
     const projection_matrix = perspective(fovy, 1, zNear, zFar);
     const world_matrix = rotateY(alpha);
-
-    //camera around 0,0
     const view_matrix = lookAt(eye, vec3(0, 0, 0), up);
 
+    let model_matrix = matrix_stack[matrix_stack.length - 1];
+
     for (let i = 0; i < all_models.length; i++) {
+        matrix_stack.push(matrix_stack[matrix_stack.length - 1]);
+
         let current_model = all_models[i];
         let model_info = getModelInfo(current_model);
         set_buffers(model_info);
@@ -225,8 +225,15 @@ function render() {
         let y = current_pos[1];
         let z = current_pos[2];
 
-        let model_matrix = translate(x, y, z);
+        //get into position and rotation
+        model_matrix = mult(model_matrix, translate(x, y, z));
         model_matrix = mult(model_matrix, rotateY(object_rotations[i]));
+
+        //apply any extra movements from the object_extra
+
+        if(is_car_moving && i === CAR_INDEX){
+            //move the car
+        }
 
         //textured or not
         gl.uniform1i(isTextureUniformLoc, current_model.textured);
@@ -239,6 +246,8 @@ function render() {
 
         //index through the positions/normal length array for offset
         gl.drawArrays(gl.TRIANGLES, 0, model_info.vertices.length);
+
+        matrix_stack.pop();
     }
 
     if (is_playing) {
