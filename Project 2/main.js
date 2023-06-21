@@ -3,11 +3,11 @@ let gl;
 let program;
 
 //camera info
-let eye = vec3(0, 2.5, 2.5);
+let eye = vec3(0, 2.5, 5.5);
 const up = vec3(0, 1, 0);
 const zNear = 0.1;
 const zFar = 25;
-const fovy = 90;
+const fovy = 105;
 
 //uniform locations
 let modelMatrixUniformLoc;
@@ -24,19 +24,22 @@ let texCoordAttributeLoc;
 let colorAttributeLoc;
 
 //all object info
+let matrix_stack = [];
 let all_models = [];
 let object_positions = [
     vec3(0, 0, 0), //lamp
     vec3(5.0, 0.0, -1.0), //stop sign
     vec3(0.0, 0, 0), //street
     vec3(3.0, 0.0, 0.0), //car
+    vec3(0, 1.5, 0) //bunny
 ];
 
 let object_rotations = [
     0, //lamp
     -90, //stop sign
     0, //street
-    180 //car
+    180, //car
+    0 //bunny
 ];
 
 //lighting
@@ -56,10 +59,11 @@ let materialSpecular = vec4(0.5, 0.5, 0.5, 1.0);
 let materialShininess = 1.0;
 
 //render variables
+let is_car_moving = false
 let is_playing = true;
 let is_forward = true;
-const ALPHA_PLAY = 1.5;
-const ALPHA_PAUSE = 0;
+
+const ALPHA_PLAY = 1;
 let alpha = 0;
 let alpha_delta = ALPHA_PLAY
 
@@ -89,6 +93,10 @@ function main() {
     //backface culling
     gl.enable(gl.CULL_FACE);
     gl.cullFace(gl.BACK);
+
+    //matrix init
+    matrix_stack = [];
+    matrix_stack.push(mat4());
 
     window.addEventListener("keydown", on_key_down);
 
@@ -155,13 +163,17 @@ function load_all_models() {
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/street.obj",
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/street.mtl");
 
+    let bunny = new Model(
+        "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/bunny.obj",
+        "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/bunny.mtl");
+
     //leave it in this order
     //else it doesnt it load them all
     loadModel(lamp);
     loadModel(stopSign);
     loadModel(street);
     loadModel(car);
-    //loadModel(bunny);
+    loadModel(bunny);
 }
 
 function set_buffers(model_info) {
@@ -229,7 +241,9 @@ function render() {
         gl.drawArrays(gl.TRIANGLES, 0, model_info.vertices.length);
     }
 
-    alpha += alpha_delta;
+    if (is_playing) {
+        alpha += alpha_delta;
+    }
     requestAnimationFrame(render);
 }
 
@@ -238,8 +252,6 @@ function loadModel(model) {
     waitForLoadedModel(model).then(
         function (value) {
             console.log("Model Loaded!");
-            console.log(model.diffuseMap);
-            console.log(model.specularMap);
 
             if (model.textured) {
                 pushModelTexture(model);
@@ -354,9 +366,11 @@ function on_key_down(event) {
     if (key === 'l') {
         set_street_light(is_light_on = !is_light_on);
     } else if (key === 'c') {
-        set_camera_animation(is_playing = !is_playing);
+        is_playing = !is_playing
     } else if (key === 'f') {
-        set_is_forward(is_forward = !is_forward);
+        alpha_delta = -alpha_delta;
+    } else if (key === 'm') {
+        is_car_moving = !is_car_moving;
     }
 }
 
@@ -374,18 +388,4 @@ function set_street_light(state) {
 
     make_lighting();
     console.log("Light is: " + state);
-}
-
-//play and pause camera animation
-function set_camera_animation(state) {
-    if (state) {
-        alpha_delta = ALPHA_PLAY;
-    } else {
-        alpha_delta = ALPHA_PAUSE;
-    }
-}
-
-//forward or reverse the animation
-function set_is_forward(state) {
-    alpha_delta = -alpha_delta;
 }
