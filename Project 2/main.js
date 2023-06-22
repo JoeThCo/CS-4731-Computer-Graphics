@@ -40,7 +40,6 @@ let object_rotations = [
     -90, //car
     0 //bunny
 ];
-let object_additional = [];
 
 const CAR_INDEX = 3;
 
