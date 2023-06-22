@@ -63,6 +63,7 @@ let materialShininess = 1.0;
 //render variables
 let is_car_moving = false
 let is_playing = true;
+let is_camera_nested = false;
 
 const ALPHA_PLAY = 1;
 
@@ -213,9 +214,12 @@ function render() {
 
     //matrix zone
     const projection_matrix = perspective(fovy, 1, zNear, zFar);
+
+    //add a trig function for the up and down
     const world_matrix = rotateY(camera_alpha);
     const view_matrix = lookAt(eye, vec3(0, 0, 0), up);
 
+    //get the current model matrix
     let model_matrix = matrix_stack[matrix_stack.length - 1];
 
     for (let i = 0; i < all_model_info.length; i++) {
@@ -255,13 +259,13 @@ function render() {
             //get direction in rads and convert to degrees
             let car_rotation = Math.atan2(dir_z, dir_x) * (180 / Math.PI);
 
+            //move and rotate car
             model_matrix = mult(model_matrix, translate(car_x, 0, car_z));
-            model_matrix = mult(model_matrix, rotateY(car_rotation - 90));
+            model_matrix = mult(model_matrix, rotateY(car_rotation + 90));
 
             //if we want to move
             if (is_car_moving) {
-                car_alpha += alpha_delta;
-                console.log(car_rotation);
+                car_alpha -= alpha_delta;
             }
         }
 
@@ -295,6 +299,7 @@ function loadModel(model) {
             if (model.textured) {
                 pushModelTexture(model);
             }
+
             all_model_info.push(getModelInfo(model));
         },
         function (reason) {
@@ -348,7 +353,8 @@ function getModelInfo(model) {
         vertices: vertices,
         normals: normals,
         texCoords: texCoords,
-        diffuse: diffuse
+        diffuse: diffuse,
+        textured: model.textured
     };
 }
 
@@ -410,6 +416,8 @@ function on_key_down(event) {
         alpha_delta = -alpha_delta;
     } else if (key === 'm') {
         is_car_moving = !is_car_moving;
+    } else if (key === 'd') {
+        is_camera_nested = !is_camera_nested;
     }
 }
 
