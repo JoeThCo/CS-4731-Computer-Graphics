@@ -199,8 +199,6 @@ function render() {
     const view_matrix = lookAt(eye, vec3(0, 0, 0), up);
 
     matrix_stack = [];
-
-    //identity on matrix stack
     matrix_stack.push(mat4());
 
     if (all_model_info.length === ALL_OBJECTS_TO_LOAD) {
