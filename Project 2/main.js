@@ -26,22 +26,7 @@ let colorAttributeLoc;
 //all object info
 let matrix_stack = [];
 let all_model_info = [];
-let object_matrices = [
-    [mat4()], //street
-    [mat4()], //lamp
-    [translate(5, 0, -1), rotateY(-90)], //stop sign
-    [translate(0, 0, 0), rotateY(0)], //car
-    [translate(0, 2, 0)] //bunny
-];
-let object_indices = [
-    [1, 2, 3], //street
-    [], //lamp
-    [], //stop sign
-    [4], //car
-    [], //bunny
-]
-
-let object_children = [];
+const ALL_OBJECTS_TO_LOAD = 5;
 
 //lighting
 let is_light_on = true;
@@ -214,27 +199,46 @@ function render() {
     const view_matrix = lookAt(eye, vec3(0, 0, 0), up);
 
     matrix_stack = [];
-    //identity on matrix stack
 
-    if (all_model_info.length === 5) {
+    //identity on matrix stack
+    matrix_stack.push(mat4());
+
+    if (all_model_info.length === ALL_OBJECTS_TO_LOAD) {
+        //render street
         let street = all_model_info[0];
         set_buffers(street)
         render_object(street, mat4());
 
+        //render lamp
         let lamp = all_model_info[1];
         set_buffers(lamp)
         render_object(lamp, mat4());
 
+        let sign_matrix = translate(4.5, 0, 1);
+        sign_matrix = mult(sign_matrix, rotateY(90));
+
         let sign = all_model_info[2]
         set_buffers(sign);
-        render_object(sign, mat4());
+        render_object(sign, sign_matrix);
 
         matrix_stack.push(mat4());
         let car = all_model_info[3]
         let bunny = all_model_info[4]
 
+        const angle = car_alpha * car_speed;
+        const car_x = car_radius * Math.cos(angle);
+        const car_z = car_radius * Math.sin(angle);
+
+        //get the direction
+        const dir_x = Math.sin(angle);
+        const dir_z = Math.cos(angle);
+
+        //get direction in rads and convert to degrees
+        let car_rotation = Math.atan2(dir_z, dir_x) * (180 / Math.PI);
+
         //do the car mult
-        matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(3, 0, 0));
+        matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(car_x, 0, car_z));
+        matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], rotateY(car_rotation - 90));
         matrix_stack.push(matrix_stack[matrix_stack.length - 1]);
 
         //do the bunny mult
@@ -253,6 +257,10 @@ function render() {
 
     if (is_playing) {
         camera_alpha += alpha_delta;
+    }
+
+    if (is_car_moving) {
+        car_alpha += alpha_delta;
     }
 
     gl.uniformMatrix4fv(projectionMatrixUniformLoc, false, flatten(projection_matrix));
@@ -284,23 +292,6 @@ function loadModel(model) {
             }
 
             all_model_info.push(getModelInfo(model));
-
-            if (all_model_info.length === 5) {
-                for (let i = 0; i < object_indices.length; i++) {
-                    let current = object_indices[i];
-
-                    if (current.length === 0) {
-                        object_children.push([]);
-                    } else {
-                        let children = []
-                        for (let j = 0; j < current.length; j++) {
-                            children.push(all_model_info[current[j]]);
-                        }
-                        object_children.push(children);
-                    }
-                }
-                console.log(object_children);
-            }
         },
         function (reason) {
             console.log("Model Failed to load: ", reason);
@@ -404,6 +395,22 @@ async function waitForLoadedModel(model) {
     }
 }
 
+//set the streetlight state
+function set_street_light(state) {
+    if (state) {
+        lightSpecular = LIGHT_ON;
+        lightDiffuse = LIGHT_ON;
+        lightAmbient = LIGHT_ON;
+    } else {
+        lightSpecular = LIGHT_OFF;
+        lightDiffuse = LIGHT_OFF;
+        lightAmbient = LIGHT_OFF;
+    }
+
+    make_lighting();
+    console.log("Light is: " + state);
+}
+
 //user key pressed input
 function on_key_down(event) {
     const key = event.key;
@@ -419,20 +426,4 @@ function on_key_down(event) {
     } else if (key === 'd') {
         is_camera_nested = !is_camera_nested;
     }
-}
-
-//set the streetlight state
-function set_street_light(state) {
-    if (state) {
-        lightSpecular = LIGHT_ON;
-        lightDiffuse = LIGHT_ON;
-        lightAmbient = LIGHT_ON;
-    } else {
-        lightSpecular = LIGHT_OFF;
-        lightDiffuse = LIGHT_OFF;
-        lightAmbient = LIGHT_OFF;
-    }
-
-    make_lighting();
-    console.log("Light is: " + state);
 }
