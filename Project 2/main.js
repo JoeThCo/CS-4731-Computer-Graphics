@@ -25,7 +25,7 @@ let colorAttributeLoc;
 
 //all object info
 let matrix_stack = [];
-let all_models = [];
+let all_model_info = [];
 let object_positions = [
     vec3(0, 0, 0), //street
     vec3(0.0, 0, 0),//lamp
@@ -63,9 +63,17 @@ let materialShininess = 1.0;
 //render variables
 let is_car_moving = false
 let is_playing = true;
+
 const ALPHA_PLAY = 1;
-let alpha = 150;
+
+let camera_alpha = 150;
+let car_alpha = 0;
+
 let alpha_delta = ALPHA_PLAY
+
+//car variables
+let car_radius = 3;
+let car_speed = .01;
 
 function main() {
     // Retrieve <canvas> element
@@ -205,17 +213,17 @@ function render() {
 
     //matrix zone
     const projection_matrix = perspective(fovy, 1, zNear, zFar);
-    const world_matrix = rotateY(alpha);
+    const world_matrix = rotateY(camera_alpha);
     const view_matrix = lookAt(eye, vec3(0, 0, 0), up);
 
     let model_matrix = matrix_stack[matrix_stack.length - 1];
 
-    for (let i = 0; i < all_models.length; i++) {
+    for (let i = 0; i < all_model_info.length; i++) {
         matrix_stack.push(matrix_stack[matrix_stack.length - 1]);
 
-        let current_model = all_models[i];
-        let model_info = getModelInfo(current_model);
-        set_buffers(model_info);
+        //get the current model info
+        let current_model_info = all_model_info[i];
+        set_buffers(current_model_info);
 
         //move object to cords
         let current_pos = object_positions[i];
@@ -230,13 +238,35 @@ function render() {
         model_matrix = mult(model_matrix, rotateY(object_rotations[i]));
 
         //apply any extra movements from the object_extra
+        if (i === CAR_INDEX) {
+            //move the car to the center
+            model_matrix = mat4();
 
-        if(is_car_moving && i === CAR_INDEX){
-            //move the car
+            let angle = car_alpha * car_speed;
+
+            //get the coords
+            const car_x = car_radius * Math.cos(angle);
+            const car_z = car_radius * Math.sin(angle);
+
+            //get the direction
+            const dir_x = Math.sin(angle);
+            const dir_z = Math.cos(angle);
+
+            //get direction in rads and convert to degrees
+            let car_rotation = Math.atan2(dir_z, dir_x) * (180 / Math.PI);
+
+            model_matrix = mult(model_matrix, translate(car_x, 0, car_z));
+            model_matrix = mult(model_matrix, rotateY(car_rotation - 90));
+
+            //if we want to move
+            if (is_car_moving) {
+                car_alpha += alpha_delta;
+                console.log(car_rotation);
+            }
         }
 
         //textured or not
-        gl.uniform1i(isTextureUniformLoc, current_model.textured);
+        gl.uniform1i(isTextureUniformLoc, current_model_info.textured);
 
         //position
         gl.uniformMatrix4fv(projectionMatrixUniformLoc, false, flatten(projection_matrix));
@@ -245,13 +275,13 @@ function render() {
         gl.uniformMatrix4fv(modelMatrixUniformLoc, false, flatten(model_matrix));
 
         //index through the positions/normal length array for offset
-        gl.drawArrays(gl.TRIANGLES, 0, model_info.vertices.length);
+        gl.drawArrays(gl.TRIANGLES, 0, current_model_info.vertices.length);
 
         matrix_stack.pop();
     }
 
     if (is_playing) {
-        alpha += alpha_delta;
+        camera_alpha += alpha_delta;
     }
     requestAnimationFrame(render);
 }
@@ -265,7 +295,7 @@ function loadModel(model) {
             if (model.textured) {
                 pushModelTexture(model);
             }
-            all_models.push(model);
+            all_model_info.push(getModelInfo(model));
         },
         function (reason) {
             console.log("Model Failed to load: ", reason);
