@@ -26,22 +26,22 @@ let colorAttributeLoc;
 //all object info
 let matrix_stack = [];
 let all_model_info = [];
-let object_positions = [
-    vec3(0, 0, 0), //street
-    vec3(0.0, 0, 0),//lamp
-    vec3(5.0, 0.0, -1.0), //stop sign
-    vec3(1.0, 0.0, 2.0), //car
-    vec3(0, 0.75, 1.75) //bunny
+let object_matrices = [
+    [mat4()], //street
+    [mat4()], //lamp
+    [translate(5, 0, -1), rotateY(-90)], //stop sign
+    [translate(0, 0, 0), rotateY(0)], //car
+    [translate(0, 2, 0)] //bunny
 ];
-let object_rotations = [
-    0, //street
-    0, //lamp
-    -90, //stop sign
-    -90, //car
-    0 //bunny
-];
+let object_indices = [
+    [1, 2, 3], //street
+    [], //lamp
+    [], //stop sign
+    [4], //car
+    [], //bunny
+]
 
-const CAR_INDEX = 3;
+let object_children = [];
 
 //lighting
 let is_light_on = true;
@@ -102,10 +102,6 @@ function main() {
     gl.enable(gl.CULL_FACE);
     gl.cullFace(gl.BACK);
 
-    //matrix init
-    matrix_stack = [];
-    matrix_stack.push(mat4());
-
     window.addEventListener("keydown", on_key_down);
 
     make_lighting();
@@ -114,6 +110,7 @@ function main() {
     uniform_init();
 
     load_all_models();
+
     render();
 }
 
@@ -211,82 +208,69 @@ function set_buffers(model_info) {
 function render() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    //matrix zone
     const projection_matrix = perspective(fovy, 1, zNear, zFar);
-
     //add a trig function for the up and down
     const world_matrix = rotateY(camera_alpha);
     const view_matrix = lookAt(eye, vec3(0, 0, 0), up);
 
-    //get the current model matrix
-    let model_matrix = matrix_stack[matrix_stack.length - 1];
+    matrix_stack = [];
+    //identity on matrix stack
 
-    for (let i = 0; i < all_model_info.length; i++) {
+    if (all_model_info.length === 5) {
+        let street = all_model_info[0];
+        set_buffers(street)
+        render_object(street, mat4());
+
+        let lamp = all_model_info[1];
+        set_buffers(lamp)
+        render_object(lamp, mat4());
+
+        let sign = all_model_info[2]
+        set_buffers(sign);
+        render_object(sign, mat4());
+
+        matrix_stack.push(mat4());
+        let car = all_model_info[3]
+        let bunny = all_model_info[4]
+
+        //do the car mult
+        matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(3, 0, 0));
         matrix_stack.push(matrix_stack[matrix_stack.length - 1]);
 
-        //get the current model info
-        let current_model_info = all_model_info[i];
-        set_buffers(current_model_info);
+        //do the bunny mult
+        matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(0, .75, 1.75));
 
-        //move object to cords
-        let current_pos = object_positions[i];
+        //render the bunny
+        set_buffers(bunny);
+        render_object(bunny, matrix_stack[matrix_stack.length - 1]);
+        matrix_stack.pop();
 
-        //model matrix
-        let x = current_pos[0];
-        let y = current_pos[1];
-        let z = current_pos[2];
-
-        //get into position and rotation
-        model_matrix = mult(model_matrix, translate(x, y, z));
-        model_matrix = mult(model_matrix, rotateY(object_rotations[i]));
-
-        //apply any extra movements from the object_extra
-        if (i === CAR_INDEX) {
-            //move the car to the center
-            model_matrix = mat4();
-
-            let angle = car_alpha * car_speed;
-
-            //get the coords
-            const car_x = car_radius * Math.cos(angle);
-            const car_z = car_radius * Math.sin(angle);
-
-            //get the direction
-            const dir_x = Math.sin(angle);
-            const dir_z = Math.cos(angle);
-
-            //get direction in rads and convert to degrees
-            let car_rotation = Math.atan2(dir_z, dir_x) * (180 / Math.PI);
-
-            //move and rotate car
-            model_matrix = mult(model_matrix, translate(car_x, 0, car_z));
-            model_matrix = mult(model_matrix, rotateY(car_rotation + 90));
-
-            //if we want to move
-            if (is_car_moving) {
-                car_alpha -= alpha_delta;
-            }
-        }
-
-        //textured or not
-        gl.uniform1i(isTextureUniformLoc, current_model_info.textured);
-
-        //position
-        gl.uniformMatrix4fv(projectionMatrixUniformLoc, false, flatten(projection_matrix));
-        gl.uniformMatrix4fv(viewMatrixUniformLoc, false, flatten(view_matrix));
-        gl.uniformMatrix4fv(worldMatrixUniformLoc, false, flatten(world_matrix));
-        gl.uniformMatrix4fv(modelMatrixUniformLoc, false, flatten(model_matrix));
-
-        //index through the positions/normal length array for offset
-        gl.drawArrays(gl.TRIANGLES, 0, current_model_info.vertices.length);
-
+        //render the car
+        set_buffers(car);
+        render_object(car, matrix_stack[matrix_stack.length - 1]);
         matrix_stack.pop();
     }
 
     if (is_playing) {
         camera_alpha += alpha_delta;
     }
+
+    gl.uniformMatrix4fv(projectionMatrixUniformLoc, false, flatten(projection_matrix));
+    gl.uniformMatrix4fv(viewMatrixUniformLoc, false, flatten(view_matrix));
+    gl.uniformMatrix4fv(worldMatrixUniformLoc, false, flatten(world_matrix));
+
     requestAnimationFrame(render);
+}
+
+function render_object(model_info, model_matrix) {
+    //textured or not
+    gl.uniform1i(isTextureUniformLoc, model_info.textured);
+
+    //model matrix info
+    gl.uniformMatrix4fv(modelMatrixUniformLoc, false, flatten(model_matrix));
+
+    //draw it
+    gl.drawArrays(gl.TRIANGLES, 0, model_info.vertices.length);
 }
 
 //main loading model function
@@ -300,6 +284,23 @@ function loadModel(model) {
             }
 
             all_model_info.push(getModelInfo(model));
+
+            if (all_model_info.length === 5) {
+                for (let i = 0; i < object_indices.length; i++) {
+                    let current = object_indices[i];
+
+                    if (current.length === 0) {
+                        object_children.push([]);
+                    } else {
+                        let children = []
+                        for (let j = 0; j < current.length; j++) {
+                            children.push(all_model_info[current[j]]);
+                        }
+                        object_children.push(children);
+                    }
+                }
+                console.log(object_children);
+            }
         },
         function (reason) {
             console.log("Model Failed to load: ", reason);
