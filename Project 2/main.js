@@ -232,28 +232,18 @@ function render() {
         let car = all_model_info[3]
         let bunny = all_model_info[4]
 
+        //car info
         const car_angle = car_alpha * car_speed;
         const car_x = car_radius * Math.cos(car_angle);
         const car_z = car_radius * Math.sin(car_angle);
-
-        //get the direction
-        const dir_x = Math.sin(car_angle);
-        const dir_z = Math.cos(car_angle);
-
-        //get direction in rads and convert to degrees
-        let car_rotation = Math.atan2(dir_z, dir_x) * (180 / Math.PI);
+        const car_rotation = get_car_rotation(car_x, car_z, car_angle);
 
         //camera info
-        const camera_angle = camera_alpha * camera_speed;
-        const cam_x = camera_radius * Math.cos(camera_angle);
-        const cam_y = camera_height + Math.cos(camera_angle) * camera_sin_height;
-        const cam_z = camera_radius * Math.sin(camera_angle);
-
-        camera_matrix = lookAt(vec3(cam_x, cam_y, cam_z), vec3(0, 0, 0), up)
+        camera_matrix = get_camera_matrix();
 
         //do the car mult
         matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(car_x, 0, car_z));
-        matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], rotateY(car_rotation - 90));
+        matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], rotateY(car_rotation));
         matrix_stack.push(matrix_stack[matrix_stack.length - 1]);
 
         //do the bunny mult
@@ -296,6 +286,28 @@ function render() {
     gl.uniformMatrix4fv(viewMatrixUniformLoc, false, flatten(view_matrix));
 
     requestAnimationFrame(render);
+}
+
+//get the car rotation
+function get_car_rotation(car_x, car_z, car_angle) {
+    //get the direction
+    const dir_x = Math.sin(car_angle);
+    const dir_z = Math.cos(car_angle);
+
+    //get direction in rads and convert to degrees
+    let car_rotation = Math.atan2(dir_z, dir_x) * (180 / Math.PI);
+
+    return car_rotation - 90;
+}
+
+//get the camera matrix
+function get_camera_matrix() {
+    const camera_angle = camera_alpha * camera_speed;
+    const cam_x = camera_radius * Math.cos(camera_angle);
+    const cam_y = camera_height + Math.cos(camera_angle) * camera_sin_height;
+    const cam_z = camera_radius * Math.sin(camera_angle);
+
+    return lookAt(vec3(cam_x, cam_y, cam_z), vec3(0, 0, 0), up)
 }
 
 function render_object(model_info, model_matrix) {
