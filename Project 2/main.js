@@ -244,9 +244,10 @@ function render() {
         //camera info
         const camera_angle = camera_alpha * camera_speed;
         const cam_x = camera_radius * Math.cos(camera_angle);
+        const cam_y = 5 + Math.cos(camera_angle) * 2.5;
         const cam_z = camera_radius * Math.sin(camera_angle);
 
-        camera_matrix = lookAt(vec3(cam_x, 5, cam_z), vec3(0, 0, 0), up)
+        camera_matrix = lookAt(vec3(cam_x, cam_y, cam_z), vec3(0, 0, 0), up)
 
         //do the car mult
         matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(car_x, 0, car_z));
