@@ -47,7 +47,7 @@ let materialShininess = 1.0;
 
 //render variables
 let is_car_moving = false
-let is_playing = true;
+let is_camera_playing = true;
 let is_camera_nested = false;
 
 const ALPHA_PLAY = 1;
@@ -262,9 +262,13 @@ function render() {
 
         //apply camera transformations here
         if (is_camera_nested) {
-            view_matrix = mult(matrix_stack[matrix_stack.length - 1], translate(0, 1, 0));
+            is_camera_playing = false;
+            view_matrix = mult(view_matrix, rotateY(22.5));
+            view_matrix = mult(view_matrix, translate(0, 1.5, 1.0));
+            view_matrix = mult(view_matrix, inverse4(matrix_stack[matrix_stack.length - 1]));
         } else {
             view_matrix = mat4();
+            is_camera_playing = true;
         }
 
         //render the bunny
@@ -278,7 +282,7 @@ function render() {
         render_object(car, matrix_stack[matrix_stack.length - 1]);
     }
 
-    if (is_playing) {
+    if (is_camera_playing) {
         camera_alpha += alpha_delta;
     }
 
@@ -442,7 +446,7 @@ function on_key_down(event) {
     if (key === 'l') {
         set_street_light(is_light_on = !is_light_on);
     } else if (key === 'c') {
-        is_playing = !is_playing
+        is_camera_playing = !is_camera_playing
     } else if (key === 'f') {
         alpha_delta = -alpha_delta;
     } else if (key === 'm') {
