@@ -53,6 +53,8 @@ let is_camera_nested = false;
 const ALPHA_PLAY = 1;
 
 //camera variables
+let camera_sin_height = 1.5;
+let camera_height = 5;
 let camera_alpha = 150;
 let camera_radius = 5;
 let camera_speed = -0.01;
@@ -244,7 +246,7 @@ function render() {
         //camera info
         const camera_angle = camera_alpha * camera_speed;
         const cam_x = camera_radius * Math.cos(camera_angle);
-        const cam_y = 5 + Math.cos(camera_angle) * 2.5;
+        const cam_y = camera_height + Math.cos(camera_angle) * camera_sin_height;
         const cam_z = camera_radius * Math.sin(camera_angle);
 
         camera_matrix = lookAt(vec3(cam_x, cam_y, cam_z), vec3(0, 0, 0), up)
