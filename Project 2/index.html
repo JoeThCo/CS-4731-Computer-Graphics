@@ -11,6 +11,7 @@
 
     uniform vec4 u_light_position;
     uniform mat4 u_projection_matrix;
+    uniform mat4 u_camera_matrix;
     uniform mat4 u_view_matrix;
     uniform mat4 u_world_matrix;
     uniform mat4 u_model_matrix;
@@ -21,8 +22,8 @@
 
     void main()
     {
-        mat4 mvp_matrix = u_projection_matrix * u_view_matrix * u_world_matrix * u_model_matrix;
-        vec3 pos = (mvp_matrix * a_position).xyz;
+        mat4 mvp_matrix = (u_projection_matrix * u_camera_matrix * u_view_matrix) * u_model_matrix;
+        vec3 pos = (mvp_matrix * a_position * u_world_matrix).xyz;
 
         L = normalize(u_light_position.xyz - pos);
         N = normalize(mvp_matrix * a_position).xyz;
@@ -73,6 +74,8 @@
     }
 
 
+
+
     </script>
 
     <script type="text/javascript" src="lib/webgl-utils.js"></script>
@@ -94,6 +97,7 @@
     </body>
     <div style="text-align: center">
         <h3>[C] to Play/Pause</h3>
+        <h3>[D] to nest the camera to the car</h3>
         <h3>[F] to Reverse Direction</h3>
         <h3>[M] to move the Car</h3>
     </div>

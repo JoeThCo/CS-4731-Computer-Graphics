@@ -12,8 +12,9 @@ const fovy = 95;
 //uniform locations
 let modelMatrixUniformLoc;
 let projectionMatrixUniformLoc;
-let viewMatrixUniformLoc;
+let cameraMatrixUniformLoc;
 let worldMatrixUniformLoc
+let viewMatrixUniformLoc;
 let isTextureUniformLoc;
 let faceColorUniformLoc;
 
@@ -51,14 +52,17 @@ let is_camera_nested = false;
 
 const ALPHA_PLAY = 1;
 
+//camera variables
 let camera_alpha = 150;
-let car_alpha = 0;
+let camera_radius = 5;
+let camera_speed = -0.01;
 
 let alpha_delta = ALPHA_PLAY
 
 //car variables
+let car_alpha = 0;
 let car_radius = 3;
-let car_speed = .01;
+let car_speed = 0.01;
 
 function main() {
     // Retrieve <canvas> element
@@ -128,9 +132,11 @@ function attribute_init() {
 function uniform_init() {
     //get uniform locations
     projectionMatrixUniformLoc = gl.getUniformLocation(program, "u_projection_matrix");
+    cameraMatrixUniformLoc = gl.getUniformLocation(program, "u_camera_matrix");
     viewMatrixUniformLoc = gl.getUniformLocation(program, "u_view_matrix");
     worldMatrixUniformLoc = gl.getUniformLocation(program, "u_world_matrix");
     modelMatrixUniformLoc = gl.getUniformLocation(program, "u_model_matrix");
+
     isTextureUniformLoc = gl.getUniformLocation(program, "u_is_textured");
     faceColorUniformLoc = gl.getUniformLocation(program, "u_face_color");
 }
@@ -195,8 +201,9 @@ function render() {
 
     const projection_matrix = perspective(fovy, 1, zNear, zFar);
     //add a trig function for the up and down
-    const world_matrix = rotateY(camera_alpha);
-    const view_matrix = lookAt(eye, vec3(0, 0, 0), up);
+    const world_matrix = mat4();
+    let camera_matrix = mat4();
+    let view_matrix = mat4();
 
     matrix_stack = [];
     matrix_stack.push(mat4());
@@ -212,9 +219,9 @@ function render() {
         set_buffers(lamp)
         render_object(lamp, mat4());
 
+        //render sign
         let sign_matrix = translate(4.5, 0, 1);
         sign_matrix = mult(sign_matrix, rotateY(90));
-
         let sign = all_model_info[2]
         set_buffers(sign);
         render_object(sign, sign_matrix);
@@ -223,16 +230,23 @@ function render() {
         let car = all_model_info[3]
         let bunny = all_model_info[4]
 
-        const angle = car_alpha * car_speed;
-        const car_x = car_radius * Math.cos(angle);
-        const car_z = car_radius * Math.sin(angle);
+        const car_angle = car_alpha * car_speed;
+        const car_x = car_radius * Math.cos(car_angle);
+        const car_z = car_radius * Math.sin(car_angle);
 
         //get the direction
-        const dir_x = Math.sin(angle);
-        const dir_z = Math.cos(angle);
+        const dir_x = Math.sin(car_angle);
+        const dir_z = Math.cos(car_angle);
 
         //get direction in rads and convert to degrees
         let car_rotation = Math.atan2(dir_z, dir_x) * (180 / Math.PI);
+
+        //camera info
+        const camera_angle = camera_alpha * camera_speed;
+        const cam_x = camera_radius * Math.cos(camera_angle);
+        const cam_z = camera_radius * Math.sin(camera_angle);
+
+        camera_matrix = lookAt(vec3(cam_x, 5, cam_z), vec3(0, 0, 0), up)
 
         //do the car mult
         matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(car_x, 0, car_z));
@@ -241,16 +255,24 @@ function render() {
 
         //do the bunny mult
         matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(0, .75, 1.75));
+        matrix_stack.push(matrix_stack[matrix_stack.length - 1]);
+
+        //apply camera transformations here
+        if (is_camera_nested) {
+            view_matrix = mult(matrix_stack[matrix_stack.length - 1], translate(0, 1, 0));
+        } else {
+            view_matrix = mat4();
+        }
 
         //render the bunny
+        matrix_stack.pop();
         set_buffers(bunny);
         render_object(bunny, matrix_stack[matrix_stack.length - 1]);
-        matrix_stack.pop();
 
         //render the car
+        matrix_stack.pop();
         set_buffers(car);
         render_object(car, matrix_stack[matrix_stack.length - 1]);
-        matrix_stack.pop();
     }
 
     if (is_playing) {
@@ -262,8 +284,9 @@ function render() {
     }
 
     gl.uniformMatrix4fv(projectionMatrixUniformLoc, false, flatten(projection_matrix));
-    gl.uniformMatrix4fv(viewMatrixUniformLoc, false, flatten(view_matrix));
+    gl.uniformMatrix4fv(cameraMatrixUniformLoc, false, flatten(camera_matrix));
     gl.uniformMatrix4fv(worldMatrixUniformLoc, false, flatten(world_matrix));
+    gl.uniformMatrix4fv(viewMatrixUniformLoc, false, flatten(view_matrix));
 
     requestAnimationFrame(render);
 }
