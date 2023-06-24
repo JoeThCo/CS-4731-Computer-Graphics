@@ -49,7 +49,6 @@ let is_car_moving = false
 let is_camera_playing = true;
 let is_camera_nested = false;
 
-
 //camera variables
 let camera_sin_height = 1.5;
 let camera_height = 5;
@@ -206,6 +205,7 @@ function render() {
     let camera_matrix = mat4();
     let view_matrix = mat4();
 
+    //stack init
     matrix_stack = [];
     matrix_stack.push(mat4());
 
@@ -227,7 +227,6 @@ function render() {
         set_buffers(sign);
         render_object(sign, sign_matrix);
 
-        matrix_stack.push(mat4());
         let car = all_model_info[3]
         let bunny = all_model_info[4]
 
@@ -240,6 +239,9 @@ function render() {
         //camera info
         camera_matrix = get_camera_matrix();
 
+        //push world matrix
+        matrix_stack.push(mat4());
+
         //do the car mult
         matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(car_x, 0, car_z));
         matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], rotateY(car_rotation));
@@ -247,13 +249,14 @@ function render() {
 
         //apply camera transformations here
         if (is_camera_nested) {
-            is_camera_playing = false;
-            view_matrix = mult(view_matrix, rotateY(car_rotation));
-            view_matrix = mult(view_matrix, translate(0.0, 0, 0));
+            //this is not clean, but works lmao
+            camera_alpha = 180;
             view_matrix = mult(view_matrix, inverse4(matrix_stack[matrix_stack.length - 1]));
+            view_matrix = mult(view_matrix, translate(-car_x, 0.0, -car_z));
+            view_matrix = mult(view_matrix, rotateY(15));
+            view_matrix = mult(view_matrix, translate(car_x, 0.0, car_z));
         } else {
             view_matrix = mat4();
-            is_camera_playing = true;
         }
 
         //do the bunny mult
@@ -279,11 +282,13 @@ function render() {
         car_alpha += alpha_delta;
     }
 
+    //push to the gpu
     gl.uniformMatrix4fv(projectionMatrixUniformLoc, false, flatten(projection_matrix));
     gl.uniformMatrix4fv(cameraMatrixUniformLoc, false, flatten(camera_matrix));
     gl.uniformMatrix4fv(worldMatrixUniformLoc, false, flatten(world_matrix));
     gl.uniformMatrix4fv(viewMatrixUniformLoc, false, flatten(view_matrix));
 
+    //next frame time
     requestAnimationFrame(render);
 }
 
@@ -457,12 +462,18 @@ function on_key_down(event) {
     if (key === 'l') {
         set_street_light(is_light_on = !is_light_on);
     } else if (key === 'c') {
-        is_camera_playing = !is_camera_playing
+        if (!is_camera_nested) {
+            is_camera_playing = !is_camera_playing
+            console.log("Camera", is_camera_playing);
+        }
     } else if (key === 'f') {
         alpha_delta = -alpha_delta;
     } else if (key === 'm') {
         is_car_moving = !is_car_moving;
+        console.log("Car", is_car_moving);
     } else if (key === 'd') {
         is_camera_nested = !is_camera_nested;
+        is_camera_playing = false;
+        console.log("Nested", is_camera_nested);
     }
 }
