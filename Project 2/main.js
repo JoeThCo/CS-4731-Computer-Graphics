@@ -205,11 +205,11 @@ function render() {
     let camera_matrix = mat4();
     let view_matrix = mat4();
 
-    //stack init
-    matrix_stack = [];
-    matrix_stack.push(mat4());
-
     if (all_model_info.length === ALL_OBJECTS_TO_LOAD) {
+        //stack init
+        matrix_stack = [];
+        matrix_stack.push(mat4());
+
         //render street
         let street = all_model_info[0];
         set_buffers(street)
