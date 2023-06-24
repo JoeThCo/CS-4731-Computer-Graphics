@@ -3,7 +3,6 @@ let gl;
 let program;
 
 //camera info
-let eye = vec3(0, 2.5, 5.5);
 const up = vec3(0, 1, 0);
 const zNear = 0.1;
 const zFar = 25;
@@ -50,7 +49,6 @@ let is_car_moving = false
 let is_camera_playing = true;
 let is_camera_nested = false;
 
-const ALPHA_PLAY = 1;
 
 //camera variables
 let camera_sin_height = 1.5;
@@ -59,6 +57,7 @@ let camera_alpha = 150;
 let camera_radius = 5;
 let camera_speed = -0.01;
 
+const ALPHA_PLAY = 1;
 let alpha_delta = ALPHA_PLAY
 
 //car variables
@@ -246,20 +245,20 @@ function render() {
         matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], rotateY(car_rotation));
         matrix_stack.push(matrix_stack[matrix_stack.length - 1]);
 
-        //do the bunny mult
-        matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(0, .75, 1.75));
-        matrix_stack.push(matrix_stack[matrix_stack.length - 1]);
-
         //apply camera transformations here
         if (is_camera_nested) {
             is_camera_playing = false;
-            view_matrix = mult(view_matrix, rotateY(22.5));
-            view_matrix = mult(view_matrix, translate(0, 1.5, 1.0));
+            view_matrix = mult(view_matrix, rotateY(car_rotation));
+            view_matrix = mult(view_matrix, translate(0.0, 0, 0));
             view_matrix = mult(view_matrix, inverse4(matrix_stack[matrix_stack.length - 1]));
         } else {
             view_matrix = mat4();
             is_camera_playing = true;
         }
+
+        //do the bunny mult
+        matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(0, .75, 1.75));
+        matrix_stack.push(matrix_stack[matrix_stack.length - 1]);
 
         //render the bunny
         matrix_stack.pop();
