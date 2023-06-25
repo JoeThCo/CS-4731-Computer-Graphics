@@ -2,6 +2,9 @@
 let gl;
 let program;
 
+//texture
+let texture_count = 0;
+
 //camera info
 const up = vec3(0, 1, 0);
 const zNear = 0.1;
@@ -396,10 +399,10 @@ function getModelInfo(model) {
 //how to load a texture
 function pushModelTexture(model) {
     //make texture
-    gl.activeTexture(gl.TEXTURE0);
+    gl.activeTexture(gl.TEXTURE0 + texture_count);
 
     const texture = gl.createTexture();
-    gl.activeTexture(gl.TEXTURE0);
+    gl.activeTexture(gl.TEXTURE0 + texture_count);
     gl.bindTexture(gl.TEXTURE_2D, texture);
 
     //make image
@@ -416,9 +419,10 @@ function pushModelTexture(model) {
 
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+    texture_count++;
 }
 
 //Promise that checks every 1.5 seconds if model has loaded
