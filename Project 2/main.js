@@ -67,6 +67,9 @@ let car_alpha = 0;
 let car_radius = 3;
 let car_speed = 0.01;
 
+//shadows
+let shadow_matrix = mat4();
+
 function main() {
     // Retrieve <canvas> element
     let canvas = document.getElementById('webgl');
@@ -80,6 +83,7 @@ function main() {
         return;
     }
 
+    //canvas
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
@@ -94,16 +98,23 @@ function main() {
     gl.enable(gl.CULL_FACE);
     gl.cullFace(gl.BACK);
 
+    //key down event
     window.addEventListener("keydown", on_key_down);
 
     make_lighting();
 
+    shadow_init();
     attribute_init();
     uniform_init();
 
     load_all_models();
 
     render();
+}
+
+function shadow_init() {
+    shadow_matrix[3][3] = 0;
+    shadow_matrix[3][2] = (-1 / lightPosition[2]);
 }
 
 function make_lighting() {
@@ -202,79 +213,8 @@ function set_buffers(model_info) {
 function render() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    const projection_matrix = perspective(fovy, 1, zNear, zFar);
-    //add a trig function for the up and down
-    const world_matrix = mat4();
-    let camera_matrix = mat4();
-    let view_matrix = mat4();
-
     if (all_model_info.length === ALL_OBJECTS_TO_LOAD) {
-        //stack init
-        matrix_stack = [];
-        matrix_stack.push(mat4());
-
-        //render street
-        let street = all_model_info[0];
-        set_buffers(street)
-        render_object(street, mat4());
-
-        //render lamp
-        let lamp = all_model_info[1];
-        set_buffers(lamp)
-        render_object(lamp, mat4());
-
-        //render sign
-        let sign_matrix = translate(4.5, 0, 1);
-        sign_matrix = mult(sign_matrix, rotateY(90));
-        let sign = all_model_info[2]
-        set_buffers(sign);
-        render_object(sign, sign_matrix);
-
-        let car = all_model_info[3]
-        let bunny = all_model_info[4]
-
-        //car info
-        const car_angle = car_alpha * car_speed;
-        const car_x = car_radius * Math.cos(car_angle);
-        const car_z = car_radius * Math.sin(car_angle);
-        const car_rotation = get_car_rotation(car_x, car_z, car_angle);
-
-        //camera info
-        camera_matrix = get_camera_matrix();
-
-        //push world matrix
-        matrix_stack.push(mat4());
-
-        //do the car mult
-        matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(car_x, 0, car_z));
-        matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], rotateY(car_rotation));
-        matrix_stack.push(matrix_stack[matrix_stack.length - 1]);
-
-        //apply camera transformations here
-        if (is_camera_nested) {
-            //this is not clean, but works lmao
-            camera_alpha = 180;
-            view_matrix = mult(view_matrix, inverse4(matrix_stack[matrix_stack.length - 1]));
-            view_matrix = mult(view_matrix, translate(-car_x, 0.0, -car_z));
-            view_matrix = mult(view_matrix, rotateY(15));
-            view_matrix = mult(view_matrix, translate(car_x, 0.0, car_z));
-        } else {
-            view_matrix = mat4();
-        }
-
-        //do the bunny mult
-        matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(0, .75, 1.75));
-        matrix_stack.push(matrix_stack[matrix_stack.length - 1]);
-
-        //render the bunny
-        matrix_stack.pop();
-        set_buffers(bunny);
-        render_object(bunny, matrix_stack[matrix_stack.length - 1]);
-
-        //render the car
-        matrix_stack.pop();
-        set_buffers(car);
-        render_object(car, matrix_stack[matrix_stack.length - 1]);
+        render_models();
     }
 
     if (is_camera_playing) {
@@ -285,14 +225,90 @@ function render() {
         car_alpha += alpha_delta;
     }
 
+    //next frame time
+    requestAnimationFrame(render);
+}
+
+function render_models() {
+    const projection_matrix = perspective(fovy, 1, zNear, zFar);
+    //add a trig function for the up and down
+    const world_matrix = mat4();
+    let camera_matrix = mat4();
+    let view_matrix = mat4();
+
+    //stack init
+    matrix_stack = [];
+    matrix_stack.push(mat4());
+
+    //model info for each object
+    let street = all_model_info[0];
+    let lamp = all_model_info[1];
+    let sign = all_model_info[2]
+    let car = all_model_info[3]
+    let bunny = all_model_info[4]
+
+    //render street
+    set_buffers(street)
+    render_object(street, mat4());
+
+    //render lamp
+    set_buffers(lamp)
+    render_object(lamp, mat4());
+
+    //render sign
+    let sign_matrix = translate(4.5, 0, 1);
+    sign_matrix = mult(sign_matrix, rotateY(90));
+    set_buffers(sign);
+    render_object(sign, sign_matrix);
+
+    //car info
+    const car_angle = car_alpha * car_speed;
+    const car_x = car_radius * Math.cos(car_angle);
+    const car_z = car_radius * Math.sin(car_angle);
+    const car_rotation = get_car_rotation(car_x, car_z, car_angle);
+
+    //camera info
+    camera_matrix = get_camera_matrix();
+
+    //push world matrix
+    matrix_stack.push(mat4());
+
+    //do the car mult
+    matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(car_x, 0, car_z));
+    matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], rotateY(car_rotation));
+    matrix_stack.push(matrix_stack[matrix_stack.length - 1]);
+
+    //apply camera transformations here
+    if (is_camera_nested) {
+        //this is not clean, but works lmao
+        camera_alpha = 180;
+        view_matrix = mult(view_matrix, inverse4(matrix_stack[matrix_stack.length - 1]));
+        view_matrix = mult(view_matrix, translate(-car_x, 0.0, -car_z));
+        view_matrix = mult(view_matrix, rotateY(15));
+        view_matrix = mult(view_matrix, translate(car_x, 0.0, car_z));
+    } else {
+        view_matrix = mat4();
+    }
+
+    //do the bunny mult
+    matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(0, .75, 1.75));
+    matrix_stack.push(matrix_stack[matrix_stack.length - 1]);
+
+    //render the bunny
+    matrix_stack.pop();
+    set_buffers(bunny);
+    render_object(bunny, matrix_stack[matrix_stack.length - 1]);
+
+    //render the car
+    matrix_stack.pop();
+    set_buffers(car);
+    render_object(car, matrix_stack[matrix_stack.length - 1]);
+
     //push to the gpu
     gl.uniformMatrix4fv(projectionMatrixUniformLoc, false, flatten(projection_matrix));
     gl.uniformMatrix4fv(cameraMatrixUniformLoc, false, flatten(camera_matrix));
     gl.uniformMatrix4fv(worldMatrixUniformLoc, false, flatten(world_matrix));
     gl.uniformMatrix4fv(viewMatrixUniformLoc, false, flatten(view_matrix));
-
-    //next frame time
-    requestAnimationFrame(render);
 }
 
 //get the car rotation
