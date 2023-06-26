@@ -213,8 +213,10 @@ function set_buffers(model_info) {
 function render() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    const projection_matrix = perspective(fovy, 1, zNear, zFar);
+
     if (all_model_info.length === ALL_OBJECTS_TO_LOAD) {
-        render_models();
+        render_models(projection_matrix);
     }
 
     if (is_camera_playing) {
@@ -229,8 +231,7 @@ function render() {
     requestAnimationFrame(render);
 }
 
-function render_models() {
-    const projection_matrix = perspective(fovy, 1, zNear, zFar);
+function render_models(projection_matrix) {
     //add a trig function for the up and down
     const world_matrix = mat4();
     let camera_matrix = mat4();

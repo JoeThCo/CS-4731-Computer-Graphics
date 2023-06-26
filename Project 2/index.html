@@ -33,7 +33,6 @@
         v_texcoord = vec2(a_texcoord.x, a_texcoord.y);
         v_color = a_color;
     }
-
     </script>
 
     <script id="fshader" type="x-shader/x-fragment">
@@ -71,7 +70,6 @@
             gl_FragColor = fColor * v_color;
         }
     }
-
     </script>
 
     <script type="text/javascript" src="lib/webgl-utils.js"></script>
