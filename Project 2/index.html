@@ -36,8 +36,6 @@
 
         gl_Position = mvp_matrix * a_position;
     }
-
-
     </script>
 
     <script id="fshader" type="x-shader/x-fragment">
@@ -52,7 +50,7 @@
     uniform vec4 ambientProduct, diffuseProduct, specularProduct;
 
     uniform float shininess;
-    uniform bool u_is_textured;
+    uniform int u_display_type;
 
     varying vec3 L, N, V;
     varying vec4 v_color;
@@ -68,16 +66,20 @@
         vec4 fColor = diffuse + specular + ambient;
         fColor.a = 1.0;
 
-        vec4 texColor = texture2D(u_stop_sign, v_texcoord);
+        vec4 stopsign = texture2D(u_stop_sign, v_texcoord);
         vec4 skybox = textureCube(u_skybox,v_skybox_coord);
 
-        if(u_is_textured)
+        if(u_display_type == 0)
         {
-            gl_FragColor = fColor * texColor;
+            gl_FragColor = fColor * stopsign;
         }
-        else
+        else if (u_display_type == 1)
         {
             gl_FragColor = fColor * v_color;
+        }
+        else if(u_display_type == 2)
+        {
+            gl_FragColor = fColor * skybox;
         }
     }
 

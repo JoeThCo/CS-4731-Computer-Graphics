@@ -14,7 +14,7 @@ let projectionMatrixUniformLoc;
 let cameraMatrixUniformLoc;
 let worldMatrixUniformLoc
 let viewMatrixUniformLoc;
-let isTextureUniformLoc;
+let displayTypeUniformLoc;
 let faceColorUniformLoc;
 let stopSignUniformLoc;
 let skyboxUniformLoc;
@@ -151,7 +151,7 @@ function uniform_init() {
     worldMatrixUniformLoc = gl.getUniformLocation(program, "u_world_matrix");
     modelMatrixUniformLoc = gl.getUniformLocation(program, "u_model_matrix");
 
-    isTextureUniformLoc = gl.getUniformLocation(program, "u_is_textured");
+    displayTypeUniformLoc = gl.getUniformLocation(program, "u_display_type");
     faceColorUniformLoc = gl.getUniformLocation(program, "u_face_color");
     skyboxUniformLoc = gl.getUniformLocation(program, "u_skybox");
     stopSignUniformLoc = gl.getUniformLocation(program, "u_stop_sign");
@@ -278,6 +278,7 @@ function render() {
 }
 
 function render_skybox() {
+    gl.uniform1i(displayTypeUniformLoc, 2);
     gl.uniform1i(skyboxUniformLoc, 1);
 }
 
@@ -388,7 +389,13 @@ function get_camera_matrix() {
 
 function render_object(model_info, model_matrix) {
     //textured or not
-    gl.uniform1i(isTextureUniformLoc, model_info.textured);
+    if(model_info.textured){
+        gl.uniform1i(displayTypeUniformLoc, 0);
+    }
+    else
+    {
+        gl.uniform1i(displayTypeUniformLoc, 1);
+    }
 
     //model matrix info
     gl.uniformMatrix4fv(modelMatrixUniformLoc, false, flatten(model_matrix));
