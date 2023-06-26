@@ -5,7 +5,7 @@ let program;
 //camera info
 const up = vec3(0, 1, 0);
 const zNear = 0.1;
-const zFar = 25;
+const zFar = 50;
 const fovy = 95;
 
 //uniform locations
@@ -68,6 +68,9 @@ let car_speed = 0.01;
 
 //shadows
 let shadow_matrix = mat4();
+
+//skybox
+let is_skybox_visible = false;
 
 function main() {
     // Retrieve <canvas> element
@@ -280,13 +283,76 @@ function render() {
 function render_skybox() {
     gl.uniform1i(displayTypeUniformLoc, 2);
     gl.uniform1i(skyboxUniformLoc, 1);
+
+    const skyboxVertices = [
+        -1, 1, -1,
+        -1, -1, -1,
+        1, -1, -1,
+        1, -1, -1,
+        1, 1, -1,
+        -1, 1, -1,
+
+        -1, -1, 1,
+        -1, -1, -1,
+        -1, 1, -1,
+        -1, 1, -1,
+        -1, 1, 1,
+        -1, -1, 1,
+
+        1, -1, -1,
+        1, -1, 1,
+        1, 1, 1,
+        1, 1, 1,
+        1, 1, -1,
+        1, -1, -1,
+
+        -1, -1, 1,
+        -1, 1, 1,
+        1, 1, 1,
+        1, 1, 1,
+        1, -1, 1,
+        -1, -1, 1,
+
+        -1, 1, -1,
+        1, 1, -1,
+        1, 1, 1,
+        1, 1, 1,
+        -1, 1, 1,
+        -1, 1, -1,
+
+        -1, -1, -1,
+        -1, -1, 1,
+        1, -1, -1,
+        1, -1, -1,
+        -1, -1, 1,
+        1, -1, 1
+    ];
+
+    // Create the skybox buffer
+    if (is_skybox_visible) {
+        const skyboxBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, skyboxBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(skyboxVertices), gl.STATIC_DRAW);
+
+        gl.enableVertexAttribArray(positionAttributeLoc);
+        gl.vertexAttribPointer(positionAttributeLoc, 3, gl.FLOAT, false, 0, 0);
+
+        let skybox_scale = 25;
+        let skybox_matrix = mat4();
+        skybox_matrix = mult(skybox_matrix, scalem(skybox_scale, skybox_scale, skybox_scale))
+
+        gl.uniformMatrix4fv(modelMatrixUniformLoc, false, flatten(skybox_matrix));
+
+        //render the skybox
+
+        gl.drawArrays(gl.TRIANGLES, 0, skyboxVertices.length / 4);
+    }
 }
 
 function render_models(projection_matrix) {
     gl.uniform1i(stopSignUniformLoc, 0);
 
     //add a trig function for the up and down
-    const world_matrix = mat4();
     let camera_matrix = mat4();
     let view_matrix = mat4();
 
@@ -361,7 +427,7 @@ function render_models(projection_matrix) {
     //push to the gpu
     gl.uniformMatrix4fv(projectionMatrixUniformLoc, false, flatten(projection_matrix));
     gl.uniformMatrix4fv(cameraMatrixUniformLoc, false, flatten(camera_matrix));
-    gl.uniformMatrix4fv(worldMatrixUniformLoc, false, flatten(world_matrix));
+    gl.uniformMatrix4fv(worldMatrixUniformLoc, false, flatten(mat4()));
     gl.uniformMatrix4fv(viewMatrixUniformLoc, false, flatten(view_matrix));
 }
 
@@ -389,11 +455,9 @@ function get_camera_matrix() {
 
 function render_object(model_info, model_matrix) {
     //textured or not
-    if(model_info.textured){
+    if (model_info.textured) {
         gl.uniform1i(displayTypeUniformLoc, 0);
-    }
-    else
-    {
+    } else {
         gl.uniform1i(displayTypeUniformLoc, 1);
     }
 
@@ -541,8 +605,6 @@ function on_key_down(event) {
             is_camera_playing = !is_camera_playing
             console.log("Camera", is_camera_playing);
         }
-    } else if (key === 'f') {
-        alpha_delta = -alpha_delta;
     } else if (key === 'm') {
         is_car_moving = !is_car_moving;
         console.log("Car", is_car_moving);
@@ -550,5 +612,7 @@ function on_key_down(event) {
         is_camera_nested = !is_camera_nested;
         is_camera_playing = false;
         console.log("Nested", is_camera_nested);
+    } else if (key === 'e') {
+        is_skybox_visible = !is_skybox_visible;
     }
 }
