@@ -236,7 +236,7 @@ function set_buffers(model_info) {
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model_info.vertices), gl.STATIC_DRAW);
-    gl.vertexAttribPointer(positionAttributeLoc, 3, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(positionAttributeLoc, 4, gl.FLOAT, false, 0, 0);
 
     //normal buffer
     const normalBuffer = gl.createBuffer();
@@ -285,47 +285,47 @@ function render_skybox() {
     gl.uniform1i(skyboxUniformLoc, 1);
 
     const skyboxVertices = [
-        -1, 1, -1,
-        -1, -1, -1,
-        1, -1, -1,
-        1, -1, -1,
-        1, 1, -1,
-        -1, 1, -1,
+        -1, 1, -1, 1,
+        -1, -1, -1, 1,
+        1, -1, -1, 1,
+        1, -1, -1, 1,
+        1, 1, -1, 1,
+        -1, 1, -1, 1,
 
-        -1, -1, 1,
-        -1, -1, -1,
-        -1, 1, -1,
-        -1, 1, -1,
-        -1, 1, 1,
-        -1, -1, 1,
+        -1, -1, 1, 1,
+        -1, -1, -1, 1,
+        -1, 1, -1, 1,
+        -1, 1, -1, 1,
+        -1, 1, 1, 1,
+        -1, -1, 1, 1,
 
-        1, -1, -1,
-        1, -1, 1,
-        1, 1, 1,
-        1, 1, 1,
-        1, 1, -1,
-        1, -1, -1,
+        1, -1, -1, 1,
+        1, -1, 1, 1,
+        1, 1, 1, 1,
+        1, 1, 1, 1,
+        1, 1, -1, 1,
+        1, -1, -1, 1,
 
-        -1, -1, 1,
-        -1, 1, 1,
-        1, 1, 1,
-        1, 1, 1,
-        1, -1, 1,
-        -1, -1, 1,
+        -1, -1, 1, 1,
+        -1, 1, 1, 1,
+        1, 1, 1, 1,
+        1, 1, 1, 1,
+        1, -1, 1, 1,
+        -1, -1, 1, 1,
 
-        -1, 1, -1,
-        1, 1, -1,
-        1, 1, 1,
-        1, 1, 1,
-        -1, 1, 1,
-        -1, 1, -1,
+        -1, 1, -1, 1,
+        1, 1, -1, 1,
+        1, 1, 1, 1,
+        1, 1, 1, 1,
+        -1, 1, 1, 1,
+        -1, 1, -1, 1,
 
-        -1, -1, -1,
-        -1, -1, 1,
-        1, -1, -1,
-        1, -1, -1,
-        -1, -1, 1,
-        1, -1, 1
+        -1, -1, -1, 1,
+        -1, -1, 1, 1,
+        1, -1, -1, 1,
+        1, -1, -1, 1,
+        -1, -1, 1, 1,
+        1, -1, 1, 1
     ];
 
     // Create the skybox buffer
@@ -334,8 +334,8 @@ function render_skybox() {
         gl.bindBuffer(gl.ARRAY_BUFFER, skyboxBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(skyboxVertices), gl.STATIC_DRAW);
 
-        gl.enableVertexAttribArray(positionAttributeLoc);
-        gl.vertexAttribPointer(positionAttributeLoc, 3, gl.FLOAT, false, 0, 0);
+        //im not sure why this needs to be here, look into this
+        gl.vertexAttribPointer(positionAttributeLoc, 4, gl.FLOAT, false, 0, 0);
 
         let skybox_scale = 25;
         let skybox_matrix = mat4();
@@ -514,9 +514,10 @@ function getModelInfo(model) {
 
                 //add to a combinded normal array
                 normals.push(c_faceNormals[k]);
-
-                //colors
             }
+
+            vertices.push(1);
+
 
             if (model.textured) {
                 for (let t = 0; t < 2; t++) {
