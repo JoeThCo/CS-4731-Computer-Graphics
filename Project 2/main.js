@@ -117,7 +117,6 @@ const skyboxVertices = [
 const ALL_IMAGES_TO_LOAD = 6;
 let images_loaded = 0;
 
-
 function main() {
     // Retrieve <canvas> element
     let canvas = document.getElementById('webgl');
@@ -207,6 +206,7 @@ function uniform_init() {
     stopSignUniformLoc = gl.getUniformLocation(program, "u_stop_sign");
 }
 
+//load all the models
 function load_all_models() {
     // Get the stop sign
     let stopSign = new Model(
