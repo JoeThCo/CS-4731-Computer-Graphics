@@ -18,6 +18,7 @@
 
     varying vec3 L, N, V;
     varying vec2 v_texcoord;
+    varying vec3 v_skybox_coord;
     varying vec4 v_color;
 
     void main()
@@ -29,23 +30,31 @@
         N = normalize(mvp_matrix * a_position).xyz;
         V = normalize(-a_normal);
 
-        gl_Position = mvp_matrix * a_position;
         v_texcoord = vec2(a_texcoord.x, a_texcoord.y);
+        v_skybox_coord = a_position.xyz;
         v_color = a_color;
+
+        gl_Position = mvp_matrix * a_position;
     }
+
+
     </script>
 
     <script id="fshader" type="x-shader/x-fragment">
     precision mediump float;
 
-    uniform sampler2D u_texture;
+    varying vec2 v_texcoord;
+    uniform sampler2D u_stop_sign;
+
+    varying vec3 v_skybox_coord;
+    uniform samplerCube u_skybox;
+
     uniform vec4 ambientProduct, diffuseProduct, specularProduct;
 
     uniform float shininess;
     uniform bool u_is_textured;
 
     varying vec3 L, N, V;
-    varying vec2 v_texcoord;
     varying vec4 v_color;
 
     void main()
@@ -59,7 +68,8 @@
         vec4 fColor = diffuse + specular + ambient;
         fColor.a = 1.0;
 
-        vec4 texColor = texture2D(u_texture, v_texcoord);
+        vec4 texColor = texture2D(u_stop_sign, v_texcoord);
+        vec4 skybox = textureCube(u_skybox,v_skybox_coord);
 
         if(u_is_textured)
         {
@@ -70,6 +80,8 @@
             gl_FragColor = fColor * v_color;
         }
     }
+
+
     </script>
 
     <script type="text/javascript" src="lib/webgl-utils.js"></script>

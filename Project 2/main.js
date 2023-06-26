@@ -2,9 +2,6 @@
 let gl;
 let program;
 
-//texture
-let texture_count = 0;
-
 //camera info
 const up = vec3(0, 1, 0);
 const zNear = 0.1;
@@ -19,6 +16,8 @@ let worldMatrixUniformLoc
 let viewMatrixUniformLoc;
 let isTextureUniformLoc;
 let faceColorUniformLoc;
+let stopSignUniformLoc;
+let skyboxUniformLoc;
 
 //attribute locations
 let positionAttributeLoc;
@@ -107,6 +106,7 @@ function main() {
     attribute_init();
     uniform_init();
 
+    load_skybox();
     load_all_models();
 
     render();
@@ -153,6 +153,8 @@ function uniform_init() {
 
     isTextureUniformLoc = gl.getUniformLocation(program, "u_is_textured");
     faceColorUniformLoc = gl.getUniformLocation(program, "u_face_color");
+    skyboxUniformLoc = gl.getUniformLocation(program, "u_skybox");
+    stopSignUniformLoc = gl.getUniformLocation(program, "u_stop_sign");
 }
 
 function load_all_models() {
@@ -182,6 +184,48 @@ function load_all_models() {
     loadModel(stopSign);
     loadModel(car);
     loadModel(bunny);
+}
+
+function load_skybox() {
+    const skybox_urls = [
+        "https://web.cs.wpi.edu/~jmcuneo/cs4731/project2/skybox_posx.png",
+        "https://web.cs.wpi.edu/~jmcuneo/cs4731/project2/skybox_negx.png",
+        "https://web.cs.wpi.edu/~jmcuneo/cs4731/project2/skybox_posy.png",
+        "https://web.cs.wpi.edu/~jmcuneo/cs4731/project2/skybox_negy.png",
+        "https://web.cs.wpi.edu/~jmcuneo/cs4731/project2/skybox_posz.png",
+        "https://web.cs.wpi.edu/~jmcuneo/cs4731/project2/skybox_negz.png"
+    ]
+    const face_target = [
+        gl.TEXTURE_CUBE_MAP_POSITIVE_X, // Right
+        gl.TEXTURE_CUBE_MAP_NEGATIVE_X, // Left
+        gl.TEXTURE_CUBE_MAP_POSITIVE_Y, // Top
+        gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, // Bottom
+        gl.TEXTURE_CUBE_MAP_POSITIVE_Z, // Front
+        gl.TEXTURE_CUBE_MAP_NEGATIVE_Z  // Back
+    ]
+
+    const texture = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+
+    //texture parameters
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+    skybox_urls.forEach((url, index) => {
+        const image = new Image();
+        image.crossOrigin = "anonymous";
+
+        image.onload = function () {
+            gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+            gl.texImage2D(face_target[index], 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+            console.log("Skybox image Loaded!");
+        }
+
+        image.src = skybox_urls[index];
+    });
 }
 
 function set_buffers(model_info) {
@@ -219,6 +263,8 @@ function render() {
         render_models(projection_matrix);
     }
 
+    render_skybox();
+
     if (is_camera_playing) {
         camera_alpha += alpha_delta;
     }
@@ -231,7 +277,13 @@ function render() {
     requestAnimationFrame(render);
 }
 
+function render_skybox() {
+    gl.uniform1i(skyboxUniformLoc, 1);
+}
+
 function render_models(projection_matrix) {
+    gl.uniform1i(stopSignUniformLoc, 0);
+
     //add a trig function for the up and down
     const world_matrix = mat4();
     let camera_matrix = mat4();
@@ -415,11 +467,8 @@ function getModelInfo(model) {
 
 //how to load a texture
 function pushModelTexture(model) {
-    //make texture
-    gl.activeTexture(gl.TEXTURE0 + texture_count);
-
     const texture = gl.createTexture();
-    gl.activeTexture(gl.TEXTURE0 + texture_count);
+    gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture);
 
     //make image
@@ -438,8 +487,6 @@ function pushModelTexture(model) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
-    texture_count++;
 }
 
 //Promise that checks every 1.5 seconds if model has loaded
