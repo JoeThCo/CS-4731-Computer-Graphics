@@ -28,7 +28,7 @@ let colorAttributeLoc;
 //all object info
 let matrix_stack = [];
 let all_model_info = [];
-const ALL_OBJECTS_TO_LOAD = 5;
+const ALL_MODELS_TO_LOAD = 5;
 
 //lighting
 let is_light_on = true;
@@ -71,6 +71,52 @@ let shadow_matrix = mat4();
 
 //skybox
 let is_skybox_visible = false;
+const skyboxVertices = [
+    -1, 1, -1, 1,
+    -1, -1, -1, 1,
+    1, -1, -1, 1,
+    1, -1, -1, 1,
+    1, 1, -1, 1,
+    -1, 1, -1, 1,
+
+    -1, -1, 1, 1,
+    -1, -1, -1, 1,
+    -1, 1, -1, 1,
+    -1, 1, -1, 1,
+    -1, 1, 1, 1,
+    -1, -1, 1, 1,
+
+    1, -1, -1, 1,
+    1, -1, 1, 1,
+    1, 1, 1, 1,
+    1, 1, 1, 1,
+    1, 1, -1, 1,
+    1, -1, -1, 1,
+
+    -1, -1, 1, 1,
+    -1, 1, 1, 1,
+    1, 1, 1, 1,
+    1, 1, 1, 1,
+    1, -1, 1, 1,
+    -1, -1, 1, 1,
+
+    -1, 1, -1, 1,
+    1, 1, -1, 1,
+    1, 1, 1, 1,
+    1, 1, 1, 1,
+    -1, 1, 1, 1,
+    -1, 1, -1, 1,
+
+    -1, -1, -1, 1,
+    -1, -1, 1, 1,
+    1, -1, -1, 1,
+    1, -1, -1, 1,
+    -1, -1, 1, 1,
+    1, -1, 1, 1
+];
+const ALL_IMAGES_TO_LOAD = 6;
+let images_loaded = 0;
+
 
 function main() {
     // Retrieve <canvas> element
@@ -109,6 +155,7 @@ function main() {
     attribute_init();
     uniform_init();
 
+    //init
     load_skybox();
     load_all_models();
 
@@ -189,6 +236,7 @@ function load_all_models() {
     loadModel(bunny);
 }
 
+//load skybox images
 function load_skybox() {
     const skybox_urls = [
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project2/skybox_posx.png",
@@ -224,6 +272,7 @@ function load_skybox() {
         image.onload = function () {
             gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
             gl.texImage2D(face_target[index], 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+            images_loaded++;
             console.log("Skybox image Loaded!");
         }
 
@@ -231,7 +280,7 @@ function load_skybox() {
     });
 }
 
-function set_buffers(model_info) {
+function make_model_buffers(model_info) {
     //position buffer
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -257,96 +306,59 @@ function set_buffers(model_info) {
     gl.vertexAttribPointer(colorAttributeLoc, 4, gl.FLOAT, false, 0, 0);
 }
 
+function make_skybox_buffers(skyboxVertices) {
+    //what type of display, skybox
+    gl.uniform1i(displayTypeUniformLoc, 2);
+
+    const skyboxBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, skyboxBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(skyboxVertices), gl.STATIC_DRAW);
+
+    //im not sure why this needs to be here, look into this
+    gl.vertexAttribPointer(positionAttributeLoc, 4, gl.FLOAT, false, 0, 0);
+}
+
 function render() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     const projection_matrix = perspective(fovy, 1, zNear, zFar);
 
-    if (all_model_info.length === ALL_OBJECTS_TO_LOAD) {
+    //models
+    if (all_model_info.length === ALL_MODELS_TO_LOAD) {
         render_models(projection_matrix);
+
+        if (is_camera_playing) {
+            camera_alpha += alpha_delta;
+        }
+
+        if (is_car_moving) {
+            car_alpha += alpha_delta;
+        }
     }
 
-    render_skybox();
-
-    if (is_camera_playing) {
-        camera_alpha += alpha_delta;
-    }
-
-    if (is_car_moving) {
-        car_alpha += alpha_delta;
+    //skybox
+    if (images_loaded === ALL_IMAGES_TO_LOAD) {
+        gl.uniform1i(skyboxUniformLoc, 1);
+        if (is_skybox_visible) {
+            render_skybox(skyboxVertices);
+        }
     }
 
     //next frame time
     requestAnimationFrame(render);
 }
 
-function render_skybox() {
-    gl.uniform1i(displayTypeUniformLoc, 2);
-    gl.uniform1i(skyboxUniformLoc, 1);
+function render_skybox(skyboxVertices) {
+    make_skybox_buffers(skyboxVertices)
 
-    const skyboxVertices = [
-        -1, 1, -1, 1,
-        -1, -1, -1, 1,
-        1, -1, -1, 1,
-        1, -1, -1, 1,
-        1, 1, -1, 1,
-        -1, 1, -1, 1,
+    //set a origin and scale up
+    let skybox_scale = 25;
+    let skybox_matrix = mat4();
+    skybox_matrix = mult(skybox_matrix, scalem(skybox_scale, skybox_scale, skybox_scale))
+    gl.uniformMatrix4fv(modelMatrixUniformLoc, false, flatten(skybox_matrix));
 
-        -1, -1, 1, 1,
-        -1, -1, -1, 1,
-        -1, 1, -1, 1,
-        -1, 1, -1, 1,
-        -1, 1, 1, 1,
-        -1, -1, 1, 1,
-
-        1, -1, -1, 1,
-        1, -1, 1, 1,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-        1, 1, -1, 1,
-        1, -1, -1, 1,
-
-        -1, -1, 1, 1,
-        -1, 1, 1, 1,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-        1, -1, 1, 1,
-        -1, -1, 1, 1,
-
-        -1, 1, -1, 1,
-        1, 1, -1, 1,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-        -1, 1, 1, 1,
-        -1, 1, -1, 1,
-
-        -1, -1, -1, 1,
-        -1, -1, 1, 1,
-        1, -1, -1, 1,
-        1, -1, -1, 1,
-        -1, -1, 1, 1,
-        1, -1, 1, 1
-    ];
-
-    // Create the skybox buffer
-    if (is_skybox_visible) {
-        const skyboxBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, skyboxBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(skyboxVertices), gl.STATIC_DRAW);
-
-        //im not sure why this needs to be here, look into this
-        gl.vertexAttribPointer(positionAttributeLoc, 4, gl.FLOAT, false, 0, 0);
-
-        let skybox_scale = 25;
-        let skybox_matrix = mat4();
-        skybox_matrix = mult(skybox_matrix, scalem(skybox_scale, skybox_scale, skybox_scale))
-
-        gl.uniformMatrix4fv(modelMatrixUniformLoc, false, flatten(skybox_matrix));
-
-        //render the skybox
-
-        gl.drawArrays(gl.TRIANGLES, 0, skyboxVertices.length / 4);
-    }
+    //render the skybox
+    gl.drawArrays(gl.TRIANGLES, 0, skyboxVertices.length / 4);
 }
 
 function render_models(projection_matrix) {
@@ -368,17 +380,17 @@ function render_models(projection_matrix) {
     let bunny = all_model_info[4]
 
     //render street
-    set_buffers(street)
+    make_model_buffers(street)
     render_object(street, mat4());
 
     //render lamp
-    set_buffers(lamp)
+    make_model_buffers(lamp)
     render_object(lamp, mat4());
 
     //render sign
     let sign_matrix = translate(4.5, 0, 1);
     sign_matrix = mult(sign_matrix, rotateY(90));
-    set_buffers(sign);
+    make_model_buffers(sign);
     render_object(sign, sign_matrix);
 
     //car info
@@ -416,12 +428,12 @@ function render_models(projection_matrix) {
 
     //render the bunny
     matrix_stack.pop();
-    set_buffers(bunny);
+    make_model_buffers(bunny);
     render_object(bunny, matrix_stack[matrix_stack.length - 1]);
 
     //render the car
     matrix_stack.pop();
-    set_buffers(car);
+    make_model_buffers(car);
     render_object(car, matrix_stack[matrix_stack.length - 1]);
 
     //push to the gpu
@@ -516,8 +528,8 @@ function getModelInfo(model) {
                 normals.push(c_faceNormals[k]);
             }
 
+            //make it go from vec3 to vec4
             vertices.push(1);
-
 
             if (model.textured) {
                 for (let t = 0; t < 2; t++) {
@@ -592,7 +604,6 @@ function set_street_light(state) {
     }
 
     make_lighting();
-    console.log("Light is: " + state);
 }
 
 //user key pressed input
@@ -601,6 +612,7 @@ function on_key_down(event) {
 
     if (key === 'l') {
         set_street_light(is_light_on = !is_light_on);
+        console.log("Light", is_light_on);
     } else if (key === 'c') {
         if (!is_camera_nested) {
             is_camera_playing = !is_camera_playing
@@ -615,5 +627,6 @@ function on_key_down(event) {
         console.log("Nested", is_camera_nested);
     } else if (key === 'e') {
         is_skybox_visible = !is_skybox_visible;
+        console.log("Skybox", is_skybox_visible);
     }
 }
