@@ -166,6 +166,34 @@ function main() {
     render();
 }
 
+function render() {
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    const projection_matrix = perspective(fovy, 1, zNear, zFar);
+
+    //models
+    if (all_model_info.length === ALL_MODELS_TO_LOAD) {
+        render_all_models(projection_matrix);
+
+        if (is_camera_moving) {
+            camera_alpha += alpha_delta;
+        }
+        if (is_car_moving) {
+            car_alpha += alpha_delta;
+        }
+    }
+
+    //skybox
+    if (images_loaded === ALL_IMAGES_TO_LOAD) {
+        gl.uniform1i(skyboxUniformLoc, 1);
+        if (is_skybox_visible) {
+            render_skybox(skyboxVertices);
+        }
+    }
+
+    //next frame time
+    requestAnimationFrame(render);
+}
 
 function lighting_init() {
     let diffuseProduct = mult(lightDiffuse, materialDiffuse);
@@ -325,36 +353,7 @@ function make_skybox_buffers(skyboxVertices) {
     gl.vertexAttribPointer(positionAttributeLoc, 4, gl.FLOAT, false, 0, 0);
 }
 
-function render() {
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    const projection_matrix = perspective(fovy, 1, zNear, zFar);
-
-    //models
-    if (all_model_info.length === ALL_MODELS_TO_LOAD) {
-        render_all_models(projection_matrix);
-
-        if (is_camera_moving) {
-            camera_alpha += alpha_delta;
-        }
-        if (is_car_moving) {
-            car_alpha += alpha_delta;
-        }
-    }
-
-    //skybox
-    if (images_loaded === ALL_IMAGES_TO_LOAD) {
-        gl.uniform1i(skyboxUniformLoc, 1);
-        if (is_skybox_visible) {
-            render_skybox(skyboxVertices);
-        }
-    }
-
-    //next frame time
-    requestAnimationFrame(render);
-}
-
-function make_shadow(model_matrix) {
+function get_shadow_matrix(model_matrix) {
     let shadow_matrix = mat4();
 
     //y axis to 0
@@ -367,11 +366,11 @@ function make_shadow(model_matrix) {
         shadow_matrix[0][1] = model_matrix[0][3];
     }
 
-    //z axis, if n
+    //z axis
     if (light_pos[2] !== 0) {
-        shadow_matrix[2][1] = (-1 / light_pos[2]) - 1;
+        shadow_matrix[2][1] = (-1 / light_pos[2]);
     } else {
-        shadow_matrix[0][1] = model_matrix[2][3];
+        shadow_matrix[2][1] = model_matrix[2][3];
     }
 
     //height
@@ -403,20 +402,6 @@ function get_camera_matrix() {
     return lookAt(vec3(cam_x, cam_y, cam_z), vec3(0, 0, 0), up)
 }
 
-//display the skybox
-function render_skybox(skyboxVertices) {
-    make_skybox_buffers(skyboxVertices)
-
-    //set a origin and scale up
-    let skybox_scale = 25;
-    let skybox_matrix = mat4();
-    skybox_matrix = mult(skybox_matrix, scalem(skybox_scale, skybox_scale, skybox_scale))
-    gl.uniformMatrix4fv(modelMatrixUniformLoc, false, flatten(skybox_matrix));
-
-    //render the skybox
-    gl.drawArrays(gl.TRIANGLES, 0, skyboxVertices.length / 4);
-}
-
 //render all the models at their positions, with the matrix stack
 function render_all_models(projection_matrix) {
     gl.uniform1i(stopSignUniformLoc, 0);
@@ -438,17 +423,17 @@ function render_all_models(projection_matrix) {
 
     //render street
     make_model_buffers(street_info)
-    render_a_object(street_info, mat4(), Number(street_info.textured));
+    render_a_model(street_info, mat4(), Number(street_info.textured));
 
     //render lamp
     make_model_buffers(lamp_info)
-    render_a_object(lamp_info, mat4(), Number(lamp_info.textured));
+    render_a_model(lamp_info, mat4(), Number(lamp_info.textured));
 
     //render sign
     let sign_matrix = translate(4.5, 0, 1);
     sign_matrix = mult(sign_matrix, rotateY(90));
     make_model_buffers(sign_info);
-    render_a_object(sign_info, sign_matrix, Number(sign_info.textured));
+    render_a_model(sign_info, sign_matrix, Number(sign_info.textured));
     render_a_shadow(sign_info, sign_matrix);
 
     //car info
@@ -484,12 +469,12 @@ function render_all_models(projection_matrix) {
     //render the bunny
     matrix_stack.pop();
     make_model_buffers(bunny_info);
-    render_a_object(bunny_info, matrix_stack[matrix_stack.length - 1], Number(bunny_info.textured));
+    render_a_model(bunny_info, matrix_stack[matrix_stack.length - 1], Number(bunny_info.textured));
 
     //render the car
     matrix_stack.pop();
     make_model_buffers(car_info);
-    render_a_object(car_info, matrix_stack[matrix_stack.length - 1], Number(car_info.textured));
+    render_a_model(car_info, matrix_stack[matrix_stack.length - 1], Number(car_info.textured));
     render_a_shadow(car_info, matrix_stack[matrix_stack.length - 1]);
 
     //push to the gpu
@@ -500,7 +485,7 @@ function render_all_models(projection_matrix) {
 }
 
 //render a single object
-function render_a_object(model_info, model_matrix, display_type) {
+function render_a_model(model_info, model_matrix, display_type) {
     gl.uniform1i(displayTypeUniformLoc, display_type);
 
     //model matrix info
@@ -510,9 +495,24 @@ function render_a_object(model_info, model_matrix, display_type) {
     gl.drawArrays(gl.TRIANGLES, 0, model_info.vertices.length);
 }
 
+//display the skybox
+function render_skybox(skyboxVertices) {
+    make_skybox_buffers(skyboxVertices)
+
+    //set a origin and scale up
+    let skybox_scale = 25;
+    let skybox_matrix = mat4();
+    skybox_matrix = mult(skybox_matrix, scalem(skybox_scale, skybox_scale, skybox_scale))
+    gl.uniformMatrix4fv(modelMatrixUniformLoc, false, flatten(skybox_matrix));
+
+    //render the skybox
+    gl.drawArrays(gl.TRIANGLES, 0, skyboxVertices.length / 4);
+}
+
+//display the shadow
 function render_a_shadow(model_info, model_matrix) {
     //sign shadow
-    let shadow_matrix = make_shadow(model_matrix);
+    let shadow_matrix = get_shadow_matrix(model_matrix);
     //move to light pos
     let obj_shadow_matrix = translate(light_pos[0], light_pos[1], light_pos[2])
     //mult in shadow matrix
@@ -521,7 +521,7 @@ function render_a_shadow(model_info, model_matrix) {
     obj_shadow_matrix = mult(obj_shadow_matrix, model_matrix);
 
     make_model_buffers(model_info);
-    render_a_object(model_info, obj_shadow_matrix, SHADOW);
+    render_a_model(model_info, obj_shadow_matrix, SHADOW);
 }
 
 //main loading model function
