@@ -69,6 +69,7 @@ let car_radius = 3;
 let car_speed = 0.01;
 
 //shadows
+let is_shadows_visible = true
 let shadow_matrix = mat4();
 
 //skybox
@@ -211,7 +212,6 @@ function uniform_init() {
     stopSignUniformLoc = gl.getUniformLocation(program, "u_stop_sign");
 }
 
-//load all the models
 function models_init() {
     // Get the stop sign
     let stopSign = new Model(
@@ -241,7 +241,6 @@ function models_init() {
     load_model(bunny);
 }
 
-//load skybox images
 function skybox_init() {
     const skybox_urls = [
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project2/skybox_posx.png",
@@ -647,5 +646,9 @@ function on_key_down(event) {
     } else if (key === 'e') {
         is_skybox_visible = !is_skybox_visible;
         console.log("Skybox", is_skybox_visible);
+    }
+    else if(key === 's'){
+        is_shadows_visible = !is_shadows_visible;
+        console.log("Shadows", is_skybox_visible);
     }
 }
