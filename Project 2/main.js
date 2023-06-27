@@ -340,20 +340,6 @@ function render() {
         if (is_car_moving) {
             car_alpha += alpha_delta;
         }
-
-        if (is_shadows_visible) {
-            gl.uniform1i(displayTypeUniformLoc, 3);
-
-            let sign = all_model_info[2];
-            let shadow_matrix = make_shadow(0);
-
-            let model_matrix = translate(light_pos[0], light_pos[1], light_pos[2]);
-            model_matrix = mult(model_matrix, shadow_matrix);
-            model_matrix = mult(model_matrix, translate(-light_pos[0], -light_pos[1], -light_pos[2]))
-
-            make_model_buffers(sign);
-            render_a_object(sign, model_matrix, 3);
-        }
     }
 
     //skybox
@@ -368,24 +354,29 @@ function render() {
     requestAnimationFrame(render);
 }
 
-function make_shadow(height) {
+function make_shadow(model_matrix) {
     let shadow_matrix = mat4();
 
+    //y axis to 0
     shadow_matrix[1][1] = 0;
 
+    //x axis
     if (light_pos[0] !== 0) {
         shadow_matrix[0][1] = (-1 / light_pos[0]);
     } else {
-        shadow_matrix[0][1] = 1;
+        shadow_matrix[0][1] = model_matrix[0][3];
     }
 
+    //z axis, if n
     if (light_pos[2] !== 0) {
-        shadow_matrix[2][1] = (-1 / light_pos[2]);
+        shadow_matrix[2][1] = (-1 / light_pos[2]) - 1;
     } else {
-        shadow_matrix[2][1] = 1;
+        shadow_matrix[0][1] = model_matrix[2][3];
     }
 
-    shadow_matrix[1][3] = -height;
+    //height
+    shadow_matrix[1][3] = -light_pos[1];
+
     return shadow_matrix;
 }
 
@@ -408,6 +399,7 @@ function get_camera_matrix() {
     const cam_y = camera_height + Math.cos(camera_angle) * camera_sin_height;
     const cam_z = camera_radius * Math.sin(camera_angle);
 
+    //console.log(cam_x,cam_z);
     return lookAt(vec3(cam_x, cam_y, cam_z), vec3(0, 0, 0), up)
 }
 
@@ -429,7 +421,8 @@ function render_skybox(skyboxVertices) {
 function render_all_models(projection_matrix) {
     gl.uniform1i(stopSignUniformLoc, 0);
 
-    //add a trig function for the up and down
+    //camera info
+    let camera_matrix = get_camera_matrix();
     let view_matrix = mat4();
 
     //stack init
@@ -437,34 +430,32 @@ function render_all_models(projection_matrix) {
     matrix_stack.push(mat4());
 
     //model info for each object
-    let street = all_model_info[0];
-    let lamp = all_model_info[1];
-    let sign = all_model_info[2]
-    let car = all_model_info[3]
-    let bunny = all_model_info[4]
+    let street_info = all_model_info[0];
+    let lamp_info = all_model_info[1];
+    let sign_info = all_model_info[2]
+    let car_info = all_model_info[3]
+    let bunny_info = all_model_info[4]
 
     //render street
-    make_model_buffers(street)
-    render_a_object(street, mat4(), Number(street.textured));
+    make_model_buffers(street_info)
+    render_a_object(street_info, mat4(), Number(street_info.textured));
 
     //render lamp
-    make_model_buffers(lamp)
-    render_a_object(lamp, mat4(), Number(lamp.textured));
+    make_model_buffers(lamp_info)
+    render_a_object(lamp_info, mat4(), Number(lamp_info.textured));
 
     //render sign
     let sign_matrix = translate(4.5, 0, 1);
     sign_matrix = mult(sign_matrix, rotateY(90));
-    make_model_buffers(sign);
-    render_a_object(sign, sign_matrix, Number(sign.textured));
+    make_model_buffers(sign_info);
+    render_a_object(sign_info, sign_matrix, Number(sign_info.textured));
+    render_a_shadow(sign_info, sign_matrix);
 
     //car info
     const car_angle = car_alpha * car_speed;
     const car_x = car_radius * Math.cos(car_angle);
     const car_z = car_radius * Math.sin(car_angle);
     const car_rotation = get_car_rotation(car_x, car_z, car_angle);
-
-    //camera info
-    let camera_matrix = get_camera_matrix();
 
     //push world matrix
     matrix_stack.push(mat4());
@@ -492,13 +483,14 @@ function render_all_models(projection_matrix) {
 
     //render the bunny
     matrix_stack.pop();
-    make_model_buffers(bunny);
-    render_a_object(bunny, matrix_stack[matrix_stack.length - 1], Number(bunny.textured));
+    make_model_buffers(bunny_info);
+    render_a_object(bunny_info, matrix_stack[matrix_stack.length - 1], Number(bunny_info.textured));
 
     //render the car
     matrix_stack.pop();
-    make_model_buffers(car);
-    render_a_object(car, matrix_stack[matrix_stack.length - 1], Number(car.textured));
+    make_model_buffers(car_info);
+    render_a_object(car_info, matrix_stack[matrix_stack.length - 1], Number(car_info.textured));
+    render_a_shadow(car_info, matrix_stack[matrix_stack.length - 1]);
 
     //push to the gpu
     gl.uniformMatrix4fv(projectionMatrixUniformLoc, false, flatten(projection_matrix));
@@ -516,6 +508,20 @@ function render_a_object(model_info, model_matrix, display_type) {
 
     //draw it
     gl.drawArrays(gl.TRIANGLES, 0, model_info.vertices.length);
+}
+
+function render_a_shadow(model_info, model_matrix) {
+    //sign shadow
+    let shadow_matrix = make_shadow(model_matrix);
+    //move to light pos
+    let obj_shadow_matrix = translate(light_pos[0], light_pos[1], light_pos[2])
+    //mult in shadow matrix
+    obj_shadow_matrix = mult(obj_shadow_matrix, shadow_matrix);
+    //mult in sign position and rotation
+    obj_shadow_matrix = mult(obj_shadow_matrix, model_matrix);
+
+    make_model_buffers(model_info);
+    render_a_object(model_info, obj_shadow_matrix, SHADOW);
 }
 
 //main loading model function

@@ -73,6 +73,9 @@
     varying vec4 v_diffuse;
     varying vec4 v_specular;
 
+    vec4 black = vec4(0,0,0,1);
+    vec4 white = vec4(1,1,1,1);
+
     void main()
     {
         //color info
@@ -107,7 +110,8 @@
         }
         else if(u_display_type == 3)
         {
-            gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            gl_FragColor = black;
+            //gl_FragColor = white;
         }
     }
 
