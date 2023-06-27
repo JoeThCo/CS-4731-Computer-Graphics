@@ -114,6 +114,8 @@ const skyboxVertices = [
     -1, -1, 1, 1,
     1, -1, 1, 1
 ];
+
+//loading count
 const ALL_IMAGES_TO_LOAD = 6;
 let images_loaded = 0;
 
@@ -148,15 +150,14 @@ function main() {
     //key down event
     window.addEventListener("keydown", on_key_down);
 
-    make_lighting();
-
+    //inits
+    lighting_init();
     shadow_init();
     attribute_init();
     uniform_init();
 
-    //init
-    load_skybox();
-    load_all_models();
+    skybox_init();
+    models_init();
 
     render();
 }
@@ -166,7 +167,7 @@ function shadow_init() {
     shadow_matrix[3][2] = (-1 / lightPosition[2]);
 }
 
-function make_lighting() {
+function lighting_init() {
     let diffuseProduct = mult(lightDiffuse, materialDiffuse);
     let specularProduct = mult(lightSpecular, materialSpecular);
     let ambientProduct = mult(lightAmbient, materialAmbient);
@@ -207,7 +208,7 @@ function uniform_init() {
 }
 
 //load all the models
-function load_all_models() {
+function models_init() {
     // Get the stop sign
     let stopSign = new Model(
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/stopsign.obj",
@@ -237,7 +238,7 @@ function load_all_models() {
 }
 
 //load skybox images
-function load_skybox() {
+function skybox_init() {
     const skybox_urls = [
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project2/skybox_posx.png",
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project2/skybox_negx.png",
@@ -514,12 +515,16 @@ function getModelInfo(model) {
             let c_faceVertices = c_face.faceVertices[j];
             let c_faceNormals = c_face.faceNormals[j];
             let c_faceTexCoords = c_face.faceTexCoords[j];
-            let c_faceMaterial = model.diffuseMap.get(c_face.material);
+            let c_diffuse = model.diffuseMap.get(c_face.material);
+            let c_specular = model.specularMap.get(c_face.material);
 
+            //vec4
             for (let m = 0; m < 4; m++) {
-                diffuse.push(c_faceMaterial[m]);
+                diffuse.push(c_diffuse[m]);
+                specular.push(c_specular[m])
             }
 
+            //vec3s
             for (let k = 0; k < 3; k++) {
                 //add to a combined postions array
                 vertices.push(c_faceVertices[k]);
@@ -528,7 +533,7 @@ function getModelInfo(model) {
                 normals.push(c_faceNormals[k]);
             }
 
-            //make it go from vec3 to vec4
+            //make vertices a vec4
             vertices.push(1);
 
             if (model.textured) {
@@ -603,7 +608,7 @@ function set_street_light(state) {
         lightAmbient = LIGHT_OFF;
     }
 
-    make_lighting();
+    lighting_init();
 }
 
 //user key pressed input
