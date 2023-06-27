@@ -49,6 +49,7 @@
         //position
         gl_Position = mvp_matrix * a_position;
     }
+
     </script>
 
     <script id="fshader" type="x-shader/x-fragment">
@@ -104,6 +105,7 @@
             gl_FragColor = fColor * skybox;
         }
     }
+
     </script>
 
     <script type="text/javascript" src="lib/webgl-utils.js"></script>
@@ -124,11 +126,12 @@
     </canvas>
     </body>
     <div style="text-align: center">
-        <h3>[C] to play camera</h3>
-        <h3>[D] to nest the camera to the car</h3>
+        <h3>[C] to toggle camera movement camera</h3>
+        <h3>[D] to toggle the camera being nested to the car</h3>
         <h3>[E] to toggle the skybox</h3>
         <h3>[L] to toggle the light on and off</h3>
-        <h3>[M] to move the car</h3>
+        <h3>[M] to toggle car movement the car</h3>
+        <h3>[S] to toggle shadows</h3>
     </div>
 </div>
 </html>

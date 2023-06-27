@@ -37,7 +37,7 @@ let is_light_on = true;
 const LIGHT_ON = vec4(.75, .75, .75, 1.0);
 const LIGHT_OFF = vec4(.25, .25, .25, 1.0);
 
-let lightPosition = vec4(0.0, 0.0, 25.0, 1.0);
+let light_pos = vec4(0, 2.5, 0, 1.0);
 let lightAmbient = LIGHT_ON;
 let lightDiffuse = LIGHT_ON;
 let lightSpecular = LIGHT_ON;
@@ -50,13 +50,13 @@ let materialShininess = 1.0;
 
 //render variables
 let is_car_moving = false
-let is_camera_playing = true;
+let is_camera_moving = false;
 let is_camera_nested = false;
 
 //camera variables
 let camera_sin_height = 1.5;
 let camera_height = 5;
-let camera_alpha = 150;
+let camera_alpha = 0;
 let camera_radius = 5;
 let camera_speed = -0.01;
 
@@ -70,7 +70,6 @@ let car_speed = 0.01;
 
 //shadows
 let is_shadows_visible = true
-let shadow_matrix = mat4();
 
 //skybox
 let is_skybox_visible = false;
@@ -155,7 +154,6 @@ function main() {
 
     //inits
     lighting_init();
-    shadow_init();
     attribute_init();
     uniform_init();
 
@@ -165,10 +163,6 @@ function main() {
     render();
 }
 
-function shadow_init() {
-    shadow_matrix[3][3] = 0;
-    shadow_matrix[3][2] = (-1 / lightPosition[2]);
-}
 
 function lighting_init() {
     let diffuseProduct = mult(lightDiffuse, materialDiffuse);
@@ -178,7 +172,7 @@ function lighting_init() {
     gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"), flatten(diffuseProduct));
     gl.uniform4fv(gl.getUniformLocation(program, "specularProduct"), flatten(specularProduct));
     gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"), flatten(ambientProduct));
-    gl.uniform4fv(gl.getUniformLocation(program, "u_light_position"), flatten(lightPosition));
+    gl.uniform4fv(gl.getUniformLocation(program, "u_light_position"), flatten(light_pos));
     gl.uniform1f(gl.getUniformLocation(program, "u_shininess"), materialShininess);
 }
 
@@ -337,12 +331,22 @@ function render() {
     if (all_model_info.length === ALL_MODELS_TO_LOAD) {
         render_all_models(projection_matrix);
 
-        if (is_camera_playing) {
+        if (is_camera_moving) {
             camera_alpha += alpha_delta;
         }
-
         if (is_car_moving) {
             car_alpha += alpha_delta;
+        }
+
+        if (is_shadows_visible) {
+            let sign = all_model_info[2];
+            let shadow_matrix = make_shadow(-1.5);
+
+            let model_matrix = translate(light_pos[0], light_pos[1], light_pos[2]);
+            model_matrix = mult(model_matrix, rotateY(90));
+
+            make_model_buffers(sign);
+            render_a_object(sign, model_matrix);
         }
     }
 
@@ -356,6 +360,19 @@ function render() {
 
     //next frame time
     requestAnimationFrame(render);
+}
+
+function make_shadow(height) {
+    let shadow_matrix = mat4();
+
+    shadow_matrix[1][1] = 0;
+
+    shadow_matrix[0][1] = (-1 / light_pos[0]);
+    shadow_matrix[2][1] = (-1 / light_pos[2]);
+
+    shadow_matrix[1][3] = height;
+
+    return shadow_matrix;
 }
 
 //get the car rotation
@@ -633,22 +650,21 @@ function on_key_down(event) {
         console.log("Light", is_light_on);
     } else if (key === 'c') {
         if (!is_camera_nested) {
-            is_camera_playing = !is_camera_playing
-            console.log("Camera", is_camera_playing);
+            is_camera_moving = !is_camera_moving
+            console.log("Camera", is_camera_moving);
         }
     } else if (key === 'm') {
         is_car_moving = !is_car_moving;
         console.log("Car", is_car_moving);
     } else if (key === 'd') {
         is_camera_nested = !is_camera_nested;
-        is_camera_playing = false;
+        is_camera_moving = false;
         console.log("Nested", is_camera_nested);
     } else if (key === 'e') {
         is_skybox_visible = !is_skybox_visible;
         console.log("Skybox", is_skybox_visible);
-    }
-    else if(key === 's'){
+    } else if (key === 's') {
         is_shadows_visible = !is_shadows_visible;
-        console.log("Shadows", is_skybox_visible);
+        console.log("Shadows", is_shadows_visible);
     }
 }
