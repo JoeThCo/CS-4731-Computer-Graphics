@@ -92,6 +92,7 @@
         //0 == textured
         //1 == colored
         //2 == skybox
+        //3 == shadow
         if(u_display_type == 0)
         {
             gl_FragColor = fColor * textured;
@@ -103,6 +104,10 @@
         else if(u_display_type == 2)
         {
             gl_FragColor = fColor * skybox;
+        }
+        else if(u_display_type == 3)
+        {
+            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
         }
     }
 
