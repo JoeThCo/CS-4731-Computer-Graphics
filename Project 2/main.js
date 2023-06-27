@@ -118,8 +118,8 @@ const skyboxVertices = [
 ];
 
 //reflections
-let is_car_reflections = false;
-let is_hood_refractions = false;
+let is_car_reflections = true;
+let is_hood_refractions = true;
 
 //loading count
 const ALL_IMAGES_TO_LOAD = 6;
@@ -130,7 +130,6 @@ const SKYBOX = 2;
 const SHADOW = 3;
 const REFLECTION = 4;
 const REFRACTION = 5;
-
 
 function main() {
     // Retrieve <canvas> element
@@ -168,6 +167,7 @@ function main() {
     attribute_init();
     uniform_init();
 
+    //in scene inits
     skybox_init();
     models_init();
 

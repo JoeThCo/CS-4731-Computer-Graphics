@@ -12,6 +12,7 @@
 
     uniform vec4 u_light_position;
 
+    //uniform mat3 u_normal_matrix;
     uniform mat4 u_projection_matrix;
     uniform mat4 u_camera_matrix;
     uniform mat4 u_view_matrix;
@@ -136,11 +137,13 @@
         {
             vec3 reflect_color = textureCube(u_skybox, reflect(v_reflect_direction, v_view_direction)).rgb;
             gl_FragColor.rgb = mix(reflect_color, gl_FragColor.rgb, 0.4);
+            gl_FragColor.a = 1.0;
         }
         else if(u_display_type == 5)
         {
-            vec3 refract_color = textureCube(u_skybox, refract(v_refract_direction, v_view_direction, .5)).rgb;
+            vec3 refract_color = textureCube(u_skybox, refract(v_refract_direction, v_view_direction, 0.5)).rgb;
             gl_FragColor.rgb = mix(refract_color, gl_FragColor.rgb, 0.6);
+            gl_FragColor.a = 1.0;
         }
     }
     </script>
