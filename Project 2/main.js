@@ -56,7 +56,7 @@ let is_camera_nested = false;
 //camera variables
 let camera_sin_height = 1.5;
 let camera_height = 5;
-let camera_alpha = 0;
+let camera_alpha = 90;
 let camera_radius = 5;
 let camera_speed = -0.01;
 
@@ -470,6 +470,7 @@ function render_all_models(projection_matrix) {
     matrix_stack.pop();
     make_model_buffers(bunny_info);
     render_a_model(bunny_info, matrix_stack[matrix_stack.length - 1], Number(bunny_info.textured));
+    render_a_shadow(bunny_info, matrix_stack[matrix_stack.length - 1]);
 
     //render the car
     matrix_stack.pop();
@@ -511,17 +512,19 @@ function render_skybox(skyboxVertices) {
 
 //display the shadow
 function render_a_shadow(model_info, model_matrix) {
-    //sign shadow
-    let shadow_matrix = get_shadow_matrix(model_matrix);
-    //move to light pos
-    let obj_shadow_matrix = translate(light_pos[0], light_pos[1], light_pos[2])
-    //mult in shadow matrix
-    obj_shadow_matrix = mult(obj_shadow_matrix, shadow_matrix);
-    //mult in sign position and rotation
-    obj_shadow_matrix = mult(obj_shadow_matrix, model_matrix);
+    if (is_shadows_visible && is_light_on) {
+        //sign shadow
+        let shadow_matrix = get_shadow_matrix(model_matrix);
+        //move to light pos
+        let obj_shadow_matrix = translate(light_pos[0], light_pos[1], light_pos[2])
+        //mult in shadow matrix
+        obj_shadow_matrix = mult(obj_shadow_matrix, shadow_matrix);
+        //mult in sign position and rotation
+        obj_shadow_matrix = mult(obj_shadow_matrix, model_matrix);
 
-    make_model_buffers(model_info);
-    render_a_model(model_info, obj_shadow_matrix, SHADOW);
+        make_model_buffers(model_info);
+        render_a_model(model_info, obj_shadow_matrix, SHADOW);
+    }
 }
 
 //main loading model function
