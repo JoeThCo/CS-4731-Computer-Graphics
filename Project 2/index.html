@@ -12,7 +12,6 @@
 
     uniform vec4 u_light_position;
 
-    //uniform mat3 u_normal_matrix;
     uniform mat4 u_projection_matrix;
     uniform mat4 u_camera_matrix;
     uniform mat4 u_view_matrix;
@@ -53,7 +52,7 @@
 
         //reflection info
         vec4 position = mvp_matrix * vec4(a_normal, 1.0);
-        vec3 normal = normalize(a_normal);
+        vec3 normal = normalize(mat3(mvp_matrix) * a_normal);
 
         vec3 incident_direction = normalize(position.xyz);
         vec3 reflect_direction = reflect(incident_direction, normal);
