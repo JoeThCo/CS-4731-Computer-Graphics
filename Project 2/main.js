@@ -9,11 +9,12 @@ const zFar = 50;
 const fovy = 95;
 
 //uniform locations
-let modelMatrixUniformLoc;
 let projectionMatrixUniformLoc;
 let cameraMatrixUniformLoc;
 let worldMatrixUniformLoc
 let viewMatrixUniformLoc;
+let modelMatrixUniformLoc;
+
 let displayTypeUniformLoc;
 let faceColorUniformLoc;
 let stopSignUniformLoc;
@@ -23,7 +24,8 @@ let skyboxUniformLoc;
 let positionAttributeLoc;
 let normalAttributeLoc;
 let texCoordAttributeLoc;
-let colorAttributeLoc;
+let diffuseAttributeLoc;
+let specularAttributeLoc;
 
 //all object info
 let matrix_stack = [];
@@ -35,14 +37,14 @@ let is_light_on = true;
 const LIGHT_ON = vec4(.75, .75, .75, 1.0);
 const LIGHT_OFF = vec4(.25, .25, .25, 1.0);
 
-let lightPosition = vec4(0.0, 0.0, 50.0, 1.0);
+let lightPosition = vec4(0.0, 0.0, 25.0, 1.0);
 let lightAmbient = LIGHT_ON;
 let lightDiffuse = LIGHT_ON;
 let lightSpecular = LIGHT_ON;
 
 //material info
-let materialAmbient = vec4(0.75, 0.75, 0.75, 1.0);
-let materialDiffuse = vec4(0.5, 0.5, 0.5, 1.0);
+let materialAmbient = vec4(1.0, 1.0, 1.0, 1.0);
+let materialDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
 let materialSpecular = vec4(0.5, 0.5, 0.5, 1.0);
 let materialShininess = 1.0;
 
@@ -176,21 +178,23 @@ function lighting_init() {
     gl.uniform4fv(gl.getUniformLocation(program, "specularProduct"), flatten(specularProduct));
     gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"), flatten(ambientProduct));
     gl.uniform4fv(gl.getUniformLocation(program, "u_light_position"), flatten(lightPosition));
-    gl.uniform1f(gl.getUniformLocation(program, "shininess"), materialShininess);
+    gl.uniform1f(gl.getUniformLocation(program, "u_shininess"), materialShininess);
 }
 
 function attribute_init() {
     //get attribute locations
     positionAttributeLoc = gl.getAttribLocation(program, "a_position");
     normalAttributeLoc = gl.getAttribLocation(program, "a_normal");
-    texCoordAttributeLoc = gl.getAttribLocation(program, "a_texcoord");
-    colorAttributeLoc = gl.getAttribLocation(program, "a_color");
+    texCoordAttributeLoc = gl.getAttribLocation(program, "a_tex_coord");
+    diffuseAttributeLoc = gl.getAttribLocation(program, "a_diffuse");
+    specularAttributeLoc = gl.getAttribLocation(program, "a_specular");
 
     //enable postion/normal data
     gl.enableVertexAttribArray(positionAttributeLoc);
     gl.enableVertexAttribArray(normalAttributeLoc);
     gl.enableVertexAttribArray(texCoordAttributeLoc);
-    gl.enableVertexAttribArray(colorAttributeLoc);
+    gl.enableVertexAttribArray(diffuseAttributeLoc);
+    gl.enableVertexAttribArray(specularAttributeLoc);
 }
 
 function uniform_init() {
@@ -300,11 +304,17 @@ function make_model_buffers(model_info) {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model_info.texCoords), gl.STATIC_DRAW);
     gl.vertexAttribPointer(texCoordAttributeLoc, 2, gl.FLOAT, false, 0, 0);
 
-    //color
-    const colorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    //diffuse
+    const diffuseBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, diffuseBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model_info.diffuse), gl.STATIC_DRAW);
-    gl.vertexAttribPointer(colorAttributeLoc, 4, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(diffuseAttributeLoc, 4, gl.FLOAT, false, 0, 0);
+
+    //specular
+    const specularBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, specularBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model_info.specular), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(specularAttributeLoc, 4, gl.FLOAT, false, 0, 0);
 }
 
 function make_skybox_buffers(skyboxVertices) {
@@ -326,7 +336,7 @@ function render() {
 
     //models
     if (all_model_info.length === ALL_MODELS_TO_LOAD) {
-        render_models(projection_matrix);
+        render_all_models(projection_matrix);
 
         if (is_camera_playing) {
             camera_alpha += alpha_delta;
@@ -349,6 +359,29 @@ function render() {
     requestAnimationFrame(render);
 }
 
+//get the car rotation
+function get_car_rotation(car_x, car_z, car_angle) {
+    //get the direction
+    const dir_x = Math.sin(car_angle);
+    const dir_z = Math.cos(car_angle);
+
+    //get direction in rads and convert to degrees
+    let car_rotation = Math.atan2(dir_z, dir_x) * (180 / Math.PI);
+
+    return car_rotation - 90;
+}
+
+//get the camera matrix
+function get_camera_matrix() {
+    const camera_angle = camera_alpha * camera_speed;
+    const cam_x = camera_radius * Math.cos(camera_angle);
+    const cam_y = camera_height + Math.cos(camera_angle) * camera_sin_height;
+    const cam_z = camera_radius * Math.sin(camera_angle);
+
+    return lookAt(vec3(cam_x, cam_y, cam_z), vec3(0, 0, 0), up)
+}
+
+//display the skybox
 function render_skybox(skyboxVertices) {
     make_skybox_buffers(skyboxVertices)
 
@@ -362,7 +395,7 @@ function render_skybox(skyboxVertices) {
     gl.drawArrays(gl.TRIANGLES, 0, skyboxVertices.length / 4);
 }
 
-function render_models(projection_matrix) {
+function render_all_models(projection_matrix) {
     gl.uniform1i(stopSignUniformLoc, 0);
 
     //add a trig function for the up and down
@@ -382,17 +415,17 @@ function render_models(projection_matrix) {
 
     //render street
     make_model_buffers(street)
-    render_object(street, mat4());
+    render_a_object(street, mat4());
 
     //render lamp
     make_model_buffers(lamp)
-    render_object(lamp, mat4());
+    render_a_object(lamp, mat4());
 
     //render sign
     let sign_matrix = translate(4.5, 0, 1);
     sign_matrix = mult(sign_matrix, rotateY(90));
     make_model_buffers(sign);
-    render_object(sign, sign_matrix);
+    render_a_object(sign, sign_matrix);
 
     //car info
     const car_angle = car_alpha * car_speed;
@@ -430,12 +463,12 @@ function render_models(projection_matrix) {
     //render the bunny
     matrix_stack.pop();
     make_model_buffers(bunny);
-    render_object(bunny, matrix_stack[matrix_stack.length - 1]);
+    render_a_object(bunny, matrix_stack[matrix_stack.length - 1]);
 
     //render the car
     matrix_stack.pop();
     make_model_buffers(car);
-    render_object(car, matrix_stack[matrix_stack.length - 1]);
+    render_a_object(car, matrix_stack[matrix_stack.length - 1]);
 
     //push to the gpu
     gl.uniformMatrix4fv(projectionMatrixUniformLoc, false, flatten(projection_matrix));
@@ -444,29 +477,7 @@ function render_models(projection_matrix) {
     gl.uniformMatrix4fv(viewMatrixUniformLoc, false, flatten(view_matrix));
 }
 
-//get the car rotation
-function get_car_rotation(car_x, car_z, car_angle) {
-    //get the direction
-    const dir_x = Math.sin(car_angle);
-    const dir_z = Math.cos(car_angle);
-
-    //get direction in rads and convert to degrees
-    let car_rotation = Math.atan2(dir_z, dir_x) * (180 / Math.PI);
-
-    return car_rotation - 90;
-}
-
-//get the camera matrix
-function get_camera_matrix() {
-    const camera_angle = camera_alpha * camera_speed;
-    const cam_x = camera_radius * Math.cos(camera_angle);
-    const cam_y = camera_height + Math.cos(camera_angle) * camera_sin_height;
-    const cam_z = camera_radius * Math.sin(camera_angle);
-
-    return lookAt(vec3(cam_x, cam_y, cam_z), vec3(0, 0, 0), up)
-}
-
-function render_object(model_info, model_matrix) {
+function render_a_object(model_info, model_matrix) {
     //textured or not
     if (model_info.textured) {
         gl.uniform1i(displayTypeUniformLoc, 0);
@@ -550,6 +561,7 @@ function getModelInfo(model) {
         normals: normals,
         texCoords: texCoords,
         diffuse: diffuse,
+        specular: specular,
         textured: model.textured
     };
 }
