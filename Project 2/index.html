@@ -30,19 +30,23 @@
 
     void main()
     {
+        //matrixes combind
         mat4 mvp_matrix = (u_projection_matrix * u_camera_matrix * u_view_matrix) * u_model_matrix;
-        vec3 pos = (mvp_matrix * a_position * u_world_matrix).xyz;
 
-        v_light_direction = normalize(u_light_position.xyz - pos);
+        //info for lighting
+        v_light_direction = normalize((u_light_position - a_position).xyz);
         v_face_normal = normalize(mvp_matrix * a_position).xyz;
         v_camera_direction = normalize(-a_normal);
 
+        //texturing info
         v_tex_coord = vec2(a_tex_coord.x, a_tex_coord.y);
         v_skybox_coord = a_position.xyz;
 
+        //color info
         v_diffuse = a_diffuse;
         v_specular = a_specular;
 
+        //position
         gl_Position = mvp_matrix * a_position;
     }
     </script>
@@ -70,21 +74,26 @@
 
     void main()
     {
+        //color info
 	    vec3 reflection = (2.0 * dot(v_light_direction, v_face_normal) * v_face_normal) - v_light_direction;
-
         vec4 diffuse = diffuseProduct * dot(v_light_direction, v_face_normal);
-        vec4 ambient = ambientProduct;
         vec4 specular = specularProduct * pow(max(dot(v_camera_direction, reflection), 0.0), u_shininess);
+        vec4 ambient = ambientProduct;
 
-        vec4 fColor = diffuse + specular + ambient;
-        fColor.a = 1.0;
+        //final color
+        vec4 fColor = vec4((diffuse + specular + ambient).xyz, 1.0);
 
-        vec4 stop_sign = texture2D(u_stop_sign, v_tex_coord);
+        //get texture coords
+        vec4 textured = texture2D(u_stop_sign, v_tex_coord);
         vec4 skybox = textureCube(u_skybox, v_skybox_coord);
 
+        //what type of object it is
+        //0 == textured
+        //1 == colored
+        //2 == skybox
         if(u_display_type == 0)
         {
-            gl_FragColor = fColor * stop_sign;
+            gl_FragColor = fColor * textured;
         }
         else if (u_display_type == 1)
         {

@@ -43,7 +43,7 @@ let lightDiffuse = LIGHT_ON;
 let lightSpecular = LIGHT_ON;
 
 //material info
-let materialAmbient = vec4(1.0, 1.0, 1.0, 1.0);
+let materialAmbient = vec4(0.75, 0.75, 0.75, 1.0);
 let materialDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
 let materialSpecular = vec4(0.5, 0.5, 0.5, 1.0);
 let materialShininess = 1.0;
@@ -234,11 +234,11 @@ function models_init() {
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/bunny.obj",
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/bunny.mtl");
 
-    loadModel(street);
-    loadModel(lamp);
-    loadModel(stopSign);
-    loadModel(car);
-    loadModel(bunny);
+    load_model(street);
+    load_model(lamp);
+    load_model(stopSign);
+    load_model(car);
+    load_model(bunny);
 }
 
 //load skybox images
@@ -395,6 +395,7 @@ function render_skybox(skyboxVertices) {
     gl.drawArrays(gl.TRIANGLES, 0, skyboxVertices.length / 4);
 }
 
+//render all the models at their positions, with the matrix stack
 function render_all_models(projection_matrix) {
     gl.uniform1i(stopSignUniformLoc, 0);
 
@@ -477,6 +478,7 @@ function render_all_models(projection_matrix) {
     gl.uniformMatrix4fv(viewMatrixUniformLoc, false, flatten(view_matrix));
 }
 
+//render a single object
 function render_a_object(model_info, model_matrix) {
     //textured or not
     if (model_info.textured) {
@@ -493,16 +495,16 @@ function render_a_object(model_info, model_matrix) {
 }
 
 //main loading model function
-function loadModel(model) {
-    waitForLoadedModel(model).then(
+function load_model(model) {
+    wait_for_model_to_load(model).then(
         function (value) {
             console.log("Model Loaded!");
 
             if (model.textured) {
-                pushModelTexture(model);
+                set_model_texture(model);
             }
 
-            all_model_info.push(getModelInfo(model));
+            all_model_info.push(get_model_info(model));
         },
         function (reason) {
             console.log("Model Failed to load: ", reason);
@@ -511,7 +513,7 @@ function loadModel(model) {
 }
 
 //How to display the model
-function getModelInfo(model) {
+function get_model_info(model) {
     let vertices = [];
     let normals = [];
     let texCoords = [];
@@ -567,7 +569,7 @@ function getModelInfo(model) {
 }
 
 //how to load a texture
-function pushModelTexture(model) {
+function set_model_texture(model) {
     const texture = gl.createTexture();
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -591,7 +593,7 @@ function pushModelTexture(model) {
 }
 
 //Promise that checks every 1.5 seconds if model has loaded
-function checkIsModelLoaded(model) {
+function is_model_loaded(model) {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
             resolve(model.objParsed && model.mtlParsed);
@@ -600,9 +602,9 @@ function checkIsModelLoaded(model) {
 }
 
 //Waits for model to be loaded
-async function waitForLoadedModel(model) {
+async function wait_for_model_to_load(model) {
     while (true) {
-        if (await checkIsModelLoaded(model)) {
+        if (await is_model_loaded(model)) {
             break;
         }
     }
