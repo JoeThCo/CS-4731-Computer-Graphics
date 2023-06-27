@@ -118,8 +118,8 @@ const skyboxVertices = [
 ];
 
 //reflections
-let is_car_reflections_visible = false;
-let is_hood_reflections_visable = false;
+let is_car_reflections = false;
+let is_hood_refractions = false;
 
 //loading count
 const ALL_IMAGES_TO_LOAD = 6;
@@ -128,6 +128,9 @@ let images_loaded = 0;
 //object type
 const SKYBOX = 2;
 const SHADOW = 3;
+const REFLECTION = 4;
+const REFRACTION = 5;
+
 
 function main() {
     // Retrieve <canvas> element
@@ -474,13 +477,25 @@ function render_all_models(projection_matrix) {
     //render the bunny
     matrix_stack.pop();
     make_model_buffers(bunny_info);
-    render_a_model(bunny_info, matrix_stack[matrix_stack.length - 1], Number(bunny_info.textured));
+
+    //refraction of the bunny
+    if (is_hood_refractions) {
+        render_a_model(car_info, matrix_stack[matrix_stack.length - 1], REFRACTION);
+    } else {
+        render_a_model(car_info, matrix_stack[matrix_stack.length - 1], Number(car_info.textured));
+    }
     render_a_shadow(bunny_info, matrix_stack[matrix_stack.length - 1]);
 
     //render the car
     matrix_stack.pop();
     make_model_buffers(car_info);
-    render_a_model(car_info, matrix_stack[matrix_stack.length - 1], Number(car_info.textured));
+
+    //car reflections
+    if (is_car_reflections) {
+        render_a_model(car_info, matrix_stack[matrix_stack.length - 1], REFLECTION);
+    } else {
+        render_a_model(car_info, matrix_stack[matrix_stack.length - 1], Number(car_info.textured));
+    }
     render_a_shadow(car_info, matrix_stack[matrix_stack.length - 1]);
 
     //push to the gpu
@@ -689,10 +704,10 @@ function on_key_down(event) {
         is_shadows_visible = !is_shadows_visible;
         console.log("Shadows", is_shadows_visible);
     } else if (key === 'r') {
-        is_car_reflections_visible = !is_car_reflections_visible;
-        console.log("Car Reflections", is_car_reflections_visible);
+        is_car_reflections = !is_car_reflections;
+        console.log("Car Reflections", is_car_reflections);
     } else if (key === 'f') {
-        is_hood_reflections_visable = !is_hood_reflections_visable;
-        console.log("Hood Reflections", is_hood_reflections_visable);
+        is_hood_refractions = !is_hood_refractions;
+        console.log("Hood Reflections", is_hood_refractions);
     }
 }
