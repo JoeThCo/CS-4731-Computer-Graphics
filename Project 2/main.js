@@ -6,7 +6,7 @@ let program;
 const up = vec3(0, 1, 0);
 const zNear = 0.1;
 const zFar = 50;
-const fovy = 95;
+const fovy = 85;
 
 //uniform locations
 let projectionMatrixUniformLoc;
@@ -37,7 +37,7 @@ let is_light_on = true;
 const LIGHT_ON = vec4(.75, .75, .75, 1.0);
 const LIGHT_OFF = vec4(.25, .25, .25, 1.0);
 
-let light_pos = vec4(0, 2.5, 0, 1.0);
+let light_pos = vec4(0, 3, 0, 1.0);
 let lightAmbient = LIGHT_ON;
 let lightDiffuse = LIGHT_ON;
 let lightSpecular = LIGHT_ON;
@@ -340,13 +340,10 @@ function render() {
 
         if (is_shadows_visible) {
             let sign = all_model_info[2];
-            let shadow_matrix = make_shadow(-1.5);
-
-            let model_matrix = translate(light_pos[0], light_pos[1], light_pos[2]);
-            model_matrix = mult(model_matrix, rotateY(90));
+            let shadow_matrix = make_shadow(-1);
 
             make_model_buffers(sign);
-            render_a_object(sign, model_matrix);
+            render_a_object(sign, shadow_matrix);
         }
     }
 
@@ -367,11 +364,19 @@ function make_shadow(height) {
 
     shadow_matrix[1][1] = 0;
 
-    shadow_matrix[0][1] = (-1 / light_pos[0]);
-    shadow_matrix[2][1] = (-1 / light_pos[2]);
+    if (light_pos[0] !== 0) {
+        shadow_matrix[0][1] = (-1 / light_pos[0]);
+    } else {
+        shadow_matrix[0][1] = 1;
+    }
 
-    shadow_matrix[1][3] = height;
+    if (light_pos[2] !== 0) {
+        shadow_matrix[2][1] = (-1 / light_pos[2]);
+    } else {
+        shadow_matrix[2][1] = 1;
+    }
 
+    shadow_matrix[1][3] = -height;
     return shadow_matrix;
 }
 
