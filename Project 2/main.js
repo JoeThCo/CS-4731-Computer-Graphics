@@ -117,10 +117,15 @@ const skyboxVertices = [
     1, -1, 1, 1
 ];
 
+//reflections
+let is_car_reflections_visible = false;
+let is_hood_reflections_visable = false;
+
 //loading count
 const ALL_IMAGES_TO_LOAD = 6;
 let images_loaded = 0;
 
+//object type
 const SKYBOX = 2;
 const SHADOW = 3;
 
@@ -683,5 +688,11 @@ function on_key_down(event) {
     } else if (key === 's') {
         is_shadows_visible = !is_shadows_visible;
         console.log("Shadows", is_shadows_visible);
+    } else if (key === 'r') {
+        is_car_reflections_visible = !is_car_reflections_visible;
+        console.log("Car Reflections", is_car_reflections_visible);
+    } else if (key === 'f') {
+        is_hood_reflections_visable = !is_hood_reflections_visable;
+        console.log("Hood Reflections", is_hood_reflections_visable);
     }
 }
