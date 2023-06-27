@@ -121,6 +121,9 @@ const skyboxVertices = [
 const ALL_IMAGES_TO_LOAD = 6;
 let images_loaded = 0;
 
+const SKYBOX = 2;
+const SHADOW = 3;
+
 function main() {
     // Retrieve <canvas> element
     let canvas = document.getElementById('webgl');
@@ -312,7 +315,7 @@ function make_model_buffers(model_info) {
 
 function make_skybox_buffers(skyboxVertices) {
     //what type of display, skybox
-    gl.uniform1i(displayTypeUniformLoc, 2);
+    gl.uniform1i(displayTypeUniformLoc, SKYBOX);
 
     const skyboxBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, skyboxBuffer);
@@ -339,11 +342,17 @@ function render() {
         }
 
         if (is_shadows_visible) {
+            gl.uniform1i(displayTypeUniformLoc, 3);
+
             let sign = all_model_info[2];
-            let shadow_matrix = make_shadow(-1);
+            let shadow_matrix = make_shadow(0);
+
+            let model_matrix = translate(light_pos[0], light_pos[1], light_pos[2]);
+            model_matrix = mult(model_matrix, shadow_matrix);
+            model_matrix = mult(model_matrix, translate(-light_pos[0], -light_pos[1], -light_pos[2]))
 
             make_model_buffers(sign);
-            render_a_object(sign, shadow_matrix);
+            render_a_object(sign, model_matrix, 3);
         }
     }
 
@@ -421,7 +430,6 @@ function render_all_models(projection_matrix) {
     gl.uniform1i(stopSignUniformLoc, 0);
 
     //add a trig function for the up and down
-    let camera_matrix = mat4();
     let view_matrix = mat4();
 
     //stack init
@@ -437,17 +445,17 @@ function render_all_models(projection_matrix) {
 
     //render street
     make_model_buffers(street)
-    render_a_object(street, mat4());
+    render_a_object(street, mat4(), Number(street.textured));
 
     //render lamp
     make_model_buffers(lamp)
-    render_a_object(lamp, mat4());
+    render_a_object(lamp, mat4(), Number(lamp.textured));
 
     //render sign
     let sign_matrix = translate(4.5, 0, 1);
     sign_matrix = mult(sign_matrix, rotateY(90));
     make_model_buffers(sign);
-    render_a_object(sign, sign_matrix);
+    render_a_object(sign, sign_matrix, Number(sign.textured));
 
     //car info
     const car_angle = car_alpha * car_speed;
@@ -456,7 +464,7 @@ function render_all_models(projection_matrix) {
     const car_rotation = get_car_rotation(car_x, car_z, car_angle);
 
     //camera info
-    camera_matrix = get_camera_matrix();
+    let camera_matrix = get_camera_matrix();
 
     //push world matrix
     matrix_stack.push(mat4());
@@ -485,12 +493,12 @@ function render_all_models(projection_matrix) {
     //render the bunny
     matrix_stack.pop();
     make_model_buffers(bunny);
-    render_a_object(bunny, matrix_stack[matrix_stack.length - 1]);
+    render_a_object(bunny, matrix_stack[matrix_stack.length - 1], Number(bunny.textured));
 
     //render the car
     matrix_stack.pop();
     make_model_buffers(car);
-    render_a_object(car, matrix_stack[matrix_stack.length - 1]);
+    render_a_object(car, matrix_stack[matrix_stack.length - 1], Number(car.textured));
 
     //push to the gpu
     gl.uniformMatrix4fv(projectionMatrixUniformLoc, false, flatten(projection_matrix));
@@ -500,13 +508,8 @@ function render_all_models(projection_matrix) {
 }
 
 //render a single object
-function render_a_object(model_info, model_matrix) {
-    //textured or not
-    if (model_info.textured) {
-        gl.uniform1i(displayTypeUniformLoc, 0);
-    } else {
-        gl.uniform1i(displayTypeUniformLoc, 1);
-    }
+function render_a_object(model_info, model_matrix, display_type) {
+    gl.uniform1i(displayTypeUniformLoc, display_type);
 
     //model matrix info
     gl.uniformMatrix4fv(modelMatrixUniformLoc, false, flatten(model_matrix));
@@ -585,7 +588,7 @@ function get_model_info(model) {
         texCoords: texCoords,
         diffuse: diffuse,
         specular: specular,
-        textured: model.textured
+        textured: !model.textured
     };
 }
 
