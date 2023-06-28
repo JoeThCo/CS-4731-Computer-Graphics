@@ -6,7 +6,7 @@ let program;
 const up = vec3(0, 1, 0);
 const zNear = 0.1;
 const zFar = 50;
-const fovy = 85;
+const fovy = 90;
 
 //uniform locations
 let projectionMatrixUniformLoc;
@@ -34,7 +34,7 @@ const ALL_MODELS_TO_LOAD = 5;
 
 //lighting
 let is_light_on = true;
-const LIGHT_ON = vec4(.75, .75, .75, 1.0);
+const LIGHT_ON = vec4(1.0, 1.0, 1.0, 1.0);
 const LIGHT_OFF = vec4(.25, .25, .25, 1.0);
 
 let light_pos = vec4(0, 3, 0, 1.0);
@@ -43,7 +43,7 @@ let lightDiffuse = LIGHT_ON;
 let lightSpecular = LIGHT_ON;
 
 //material info
-let materialAmbient = vec4(0.75, 0.75, 0.75, 1.0);
+let materialAmbient = vec4(1.0, 1.0, 1.0, 1.0);
 let materialDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
 let materialSpecular = vec4(0.5, 0.5, 0.5, 1.0);
 let materialShininess = 1.0;
