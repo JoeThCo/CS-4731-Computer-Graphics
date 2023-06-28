@@ -6,7 +6,7 @@ let program;
 const up = vec3(0, 1, 0);
 const zNear = 0.1;
 const zFar = 50;
-const fovy = 90;
+const fovy = 105;
 
 //uniform locations
 let projectionMatrixUniformLoc;
@@ -34,7 +34,7 @@ const ALL_MODELS_TO_LOAD = 5;
 
 //lighting
 let is_light_on = true;
-let light_pos = vec4(0, 3.0, 0, 1.0);
+let light_pos = vec4(0, 5, 0, 1.0);
 
 const LIGHT_ON = vec4(.5, .5, .5, 1.0);
 const LIGHT_OFF = vec4(.15, .15, .15, 1.0);
@@ -457,19 +457,25 @@ function render_all_models(projection_matrix) {
     //do the car mult
     matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(car_x, 0, car_z));
     matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], rotateY(car_rotation));
-    matrix_stack.push(matrix_stack[matrix_stack.length - 1]);
 
     //apply camera transformations here
     if (is_camera_nested) {
-        //this is not clean, but works lmao
-        camera_alpha = 180;
+        camera_alpha = 90;
+
+        //move to origin
+        view_matrix = mult(view_matrix, translate(car_radius, 0, car_radius));
+
+        //apply transformations
+        view_matrix = mult(view_matrix, rotateY(-30));
+        view_matrix = mult(view_matrix, translate(0,4,-3));
+
+        //retirn to og spot
+        view_matrix = mult(view_matrix, translate(-car_radius, 0, -car_radius));
         view_matrix = mult(view_matrix, inverse4(matrix_stack[matrix_stack.length - 1]));
-        view_matrix = mult(view_matrix, translate(-car_x, 0.0, -car_z));
-        view_matrix = mult(view_matrix, rotateY(15));
-        view_matrix = mult(view_matrix, translate(car_x, 0.0, car_z));
-    } else {
-        view_matrix = mat4();
     }
+
+    matrix_stack.push(matrix_stack[matrix_stack.length - 1]);
+
 
     //do the bunny mult
     matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(0, .75, 1.75));
