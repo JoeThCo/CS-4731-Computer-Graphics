@@ -225,7 +225,7 @@ function attribute_init() {
     diffuseAttributeLoc = gl.getAttribLocation(program, "a_diffuse");
     specularAttributeLoc = gl.getAttribLocation(program, "a_specular");
 
-    //enable postion/normal data
+    //enable attribute data
     gl.enableVertexAttribArray(positionAttributeLoc);
     gl.enableVertexAttribArray(normalAttributeLoc);
     gl.enableVertexAttribArray(texCoordAttributeLoc);
@@ -234,7 +234,6 @@ function attribute_init() {
 }
 
 function uniform_init() {
-    //get uniform locations
     projectionMatrixUniformLoc = gl.getUniformLocation(program, "u_projection_matrix");
     cameraMatrixUniformLoc = gl.getUniformLocation(program, "u_camera_matrix");
     viewMatrixUniformLoc = gl.getUniformLocation(program, "u_view_matrix");
@@ -248,7 +247,6 @@ function uniform_init() {
 }
 
 function models_init() {
-    // Get the stop sign
     let stopSign = new Model(
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/stopsign.obj",
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project3/stopsign.mtl");
