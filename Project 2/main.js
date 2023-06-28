@@ -184,9 +184,10 @@ function render() {
     if (all_model_info.length === ALL_MODELS_TO_LOAD) {
         render_all_models(projection_matrix);
 
-        if (is_camera_moving) {
+        if (is_camera_moving && !is_camera_nested) {
             camera_alpha += alpha_delta;
         }
+
         if (is_car_moving) {
             car_alpha += alpha_delta;
         }
@@ -467,7 +468,7 @@ function render_all_models(projection_matrix) {
 
         //apply transformations
         view_matrix = mult(view_matrix, rotateY(-30));
-        view_matrix = mult(view_matrix, translate(0,4,-3));
+        view_matrix = mult(view_matrix, translate(0, 4, -3));
 
         //retirn to og spot
         view_matrix = mult(view_matrix, translate(-car_radius, 0, -car_radius));
@@ -475,7 +476,6 @@ function render_all_models(projection_matrix) {
     }
 
     matrix_stack.push(matrix_stack[matrix_stack.length - 1]);
-
 
     //do the bunny mult
     matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(0, .75, 1.75));
@@ -693,16 +693,13 @@ function on_key_down(event) {
         set_street_light(is_light_on = !is_light_on);
         console.log("Light", is_light_on);
     } else if (key === 'c') {
-        if (!is_camera_nested) {
-            is_camera_moving = !is_camera_moving
-            console.log("Camera", is_camera_moving);
-        }
+        is_camera_moving = !is_camera_moving
+        console.log("Camera", is_camera_moving);
     } else if (key === 'm') {
         is_car_moving = !is_car_moving;
         console.log("Car", is_car_moving);
     } else if (key === 'd') {
         is_camera_nested = !is_camera_nested;
-        is_camera_moving = false;
         console.log("Nested", is_camera_nested);
     } else if (key === 'e') {
         is_skybox_visible = !is_skybox_visible;
