@@ -55,8 +55,8 @@ let is_camera_moving = false;
 let is_camera_nested = false;
 
 //camera variables
-let camera_sin_height = 1.5;
-let camera_height = 5;
+let camera_sin_height = 1.25;
+let camera_height = 2.5;
 let camera_alpha = 90;
 let camera_radius = 5;
 let camera_speed = -0.01;
@@ -286,12 +286,12 @@ function skybox_init() {
         "https://web.cs.wpi.edu/~jmcuneo/cs4731/project2/skybox_negz.png"
     ]
     const face_target = [
-        gl.TEXTURE_CUBE_MAP_POSITIVE_X, // Right
-        gl.TEXTURE_CUBE_MAP_NEGATIVE_X, // Left
-        gl.TEXTURE_CUBE_MAP_POSITIVE_Y, // Top
-        gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, // Bottom
-        gl.TEXTURE_CUBE_MAP_POSITIVE_Z, // Front
-        gl.TEXTURE_CUBE_MAP_NEGATIVE_Z  // Back
+        gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+        gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+        gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+        gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+        gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+        gl.TEXTURE_CUBE_MAP_NEGATIVE_Z
     ]
 
     const texture = gl.createTexture();
@@ -299,9 +299,9 @@ function skybox_init() {
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
 
     //texture parameters
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
     skybox_urls.forEach((url, index) => {
@@ -468,7 +468,7 @@ function render_all_models(projection_matrix) {
 
         //apply transformations
         view_matrix = mult(view_matrix, rotateY(-30));
-        view_matrix = mult(view_matrix, translate(0, 4, -3));
+        view_matrix = mult(view_matrix, translate(0, 1.5, -3));
 
         //retirn to og spot
         view_matrix = mult(view_matrix, translate(-car_radius, 0, -car_radius));
@@ -478,7 +478,7 @@ function render_all_models(projection_matrix) {
     matrix_stack.push(matrix_stack[matrix_stack.length - 1]);
 
     //do the bunny mult
-    matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(0, .75, 1.75));
+    matrix_stack[matrix_stack.length - 1] = mult(matrix_stack[matrix_stack.length - 1], translate(0, .7, 1.7));
     matrix_stack.push(matrix_stack[matrix_stack.length - 1]);
 
     //render the bunny
@@ -491,7 +491,6 @@ function render_all_models(projection_matrix) {
     } else {
         render_a_model(car_info, matrix_stack[matrix_stack.length - 1], Number(car_info.textured));
     }
-    render_a_shadow(bunny_info, matrix_stack[matrix_stack.length - 1]);
 
     //render the car
     matrix_stack.pop();
