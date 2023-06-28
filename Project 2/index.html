@@ -93,18 +93,17 @@
     varying vec4 v_diffuse;
     varying vec4 v_specular;
 
-    vec4 shadow = vec4(0,0,0,.90);
+    vec4 shadow = vec4(0, 0, 0, .90);
 
     void main()
     {
         //color info
 	    vec3 reflection = (2.0 * dot(v_light_direction, v_face_normal) * v_face_normal) - v_light_direction;
         vec4 diffuse = diffuseProduct * dot(v_light_direction, v_face_normal);
-        vec4 specular = specularProduct * pow(max(dot(v_camera_direction, reflection), 0.0), u_shininess);
-        vec4 ambient = ambientProduct;
+        vec4 specular = specularProduct * pow(max(dot(v_camera_direction, reflection), 0.1), u_shininess);
 
         //final color
-        vec4 fColor = vec4((diffuse + specular + ambient).xyz, 1.0);
+        vec4 fColor = vec4((diffuse + specular + ambientProduct).xyz, 1.0);
 
         //get texture coords
         vec4 textured = texture2D(u_stop_sign, v_tex_coord);
@@ -114,32 +113,32 @@
 
         //what type of object it is
         //0 == textured
-        //1 == colored
-        //2 == skybox
-        //3 == shadow
-        //4 == reflection
-        //5 == refraction
         if(u_display_type == 0)
         {
             gl_FragColor = fColor * textured;
         }
+        //1 == colored
         else if (u_display_type == 1)
         {
             gl_FragColor = fColor * v_diffuse + (v_specular * specular);
         }
+        //2 == skybox
         else if(u_display_type == 2)
         {
             gl_FragColor = fColor * skybox;
         }
+        //3 == shadow
         else if(u_display_type == 3)
         {
             gl_FragColor = shadow;
         }
+        //4 == reflection
         else if(u_display_type == 4)
         {
             gl_FragColor.rgb = mix(reflect_color, gl_FragColor.rgb, 0.4);
             gl_FragColor.a = 1.0;
         }
+        //5 == refraction
         else if(u_display_type == 5)
         {
             gl_FragColor.rgb = mix(refract_color, gl_FragColor.rgb, 0.6);

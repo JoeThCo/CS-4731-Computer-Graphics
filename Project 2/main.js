@@ -34,10 +34,11 @@ const ALL_MODELS_TO_LOAD = 5;
 
 //lighting
 let is_light_on = true;
-const LIGHT_ON = vec4(1.0, 1.0, 1.0, 1.0);
-const LIGHT_OFF = vec4(.25, .25, .25, 1.0);
+let light_pos = vec4(0, 3.0, 0, 1.0);
 
-let light_pos = vec4(0, 3, 0, 1.0);
+const LIGHT_ON = vec4(.5, .5, .5, 1.0);
+const LIGHT_OFF = vec4(.15, .15, .15, 1.0);
+
 let lightAmbient = LIGHT_ON;
 let lightDiffuse = LIGHT_ON;
 let lightSpecular = LIGHT_ON;
@@ -45,8 +46,8 @@ let lightSpecular = LIGHT_ON;
 //material info
 let materialAmbient = vec4(1.0, 1.0, 1.0, 1.0);
 let materialDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
-let materialSpecular = vec4(0.5, 0.5, 0.5, 1.0);
-let materialShininess = 1.0;
+let materialSpecular = vec4(1.0, 1.0, 1.0, 1.0);
+let materialShininess = 2.5;
 
 //render variables
 let is_car_moving = false
@@ -118,8 +119,8 @@ const skyboxVertices = [
 ];
 
 //reflections
-let is_car_reflections = true;
-let is_hood_refractions = true;
+let is_car_reflections = false;
+let is_hood_refractions = false;
 
 //loading count
 const ALL_IMAGES_TO_LOAD = 6;
