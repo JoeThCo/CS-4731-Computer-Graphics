@@ -1,6 +1,6 @@
 # CS 4731 Computer Graphics
 
-## "This course studies the use of the computer to model and graphically render two- and three-dimensional structures. Topics include graphics devices and languages, 2- and 3-D object representations, and various aspects of rendering realistic images. Students will be expected to implement programs which span all stages of the 3-D graphics pipeline, including clipping, projection, arbitrary viewing, hidden surface removal, and shading."
+## "This course studies the use of the computer to model and graphically render two-dimensional and three-dimensional structures. Topics include graphics devices and languages, 2- and 3-D object representations, and various aspects of rendering realistic images. Students will be expected to implement programs which span all stages of the 3-D graphics pipeline, including clipping, projection, arbitrary viewing, hidden surface removal, and shading."
 
 ## Project 1
 ### Part 1
